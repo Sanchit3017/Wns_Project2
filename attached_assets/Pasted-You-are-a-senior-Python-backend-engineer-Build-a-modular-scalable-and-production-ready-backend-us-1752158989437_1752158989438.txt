@@ -1,0 +1,180 @@
+You are a senior Python backend engineer. Build a modular, scalable, and production-ready backend using FastAPI, SQLAlchemy, PostgreSQL, and JWT tokens for a city-based employee travel management system.
+
+🛠 Tech Stack:
+FastAPI (API framework)
+
+SQLAlchemy (ORM)
+
+PostgreSQL (Database)
+
+Pydantic (Schema validation)
+
+JWT (Role-based Auth)
+
+.env-based config for flexible DB integration
+
+🎭 System Roles:
+Admin
+
+Manages users (employees and drivers)
+
+Views and assigns trips
+
+Access to analytics
+
+Views all notifications
+
+Driver
+
+Registers with: name, phone number, DL number, vehicle plate number
+
+Views assigned trips
+
+Starts/completes trips
+
+Updates location (optional future enhancement)
+
+Receives notifications (via notification API)
+
+Employee
+
+Registers with: name, employee_id, phone number, home location, commute schedule
+
+Views upcoming trips
+
+Requests leave/rescheduling
+
+Tracks current trip
+
+Receives notifications
+
+📦 Required Folder Structure:
+graphql
+Copy
+Edit
+travel_management_backend/
+├── app/
+│   ├── api/                   # Contains API endpoints for each entity
+│   │   ├── auth.py
+│   │   ├── admin.py
+│   │   ├── driver.py
+│   │   ├── employee.py
+│   │   ├── trip.py
+│   │   └── notification.py
+│   │
+│   ├── models/                # SQLAlchemy models for DB tables
+│   │   ├── user.py
+│   │   ├── driver.py
+│   │   ├── employee.py
+│   │   ├── trip.py
+│   │   ├── vehicle.py
+│   │   └── notification.py
+│   │
+│   ├── schemas/               # Pydantic schemas for validation
+│   │   ├── auth.py
+│   │   ├── driver.py
+│   │   ├── employee.py
+│   │   ├── trip.py
+│   │   ├── vehicle.py
+│   │   └── notification.py
+│   │
+│   ├── routers/               # Route inclusion for app main
+│   │   ├── auth_router.py
+│   │   ├── admin_router.py
+│   │   ├── driver_router.py
+│   │   ├── employee_router.py
+│   │   ├── trip_router.py
+│   │   └── notification_router.py
+│   │
+│   ├── core/
+│   │   ├── config.py          # Loads env and config
+│   │   └── security.py        # JWT utilities
+│   │
+│   ├── database/
+│   │   ├── base.py            # SQLAlchemy Base class
+│   │   ├── session.py         # Engine, SessionLocal
+│   │   └── init_db.py         # Inserts sample/demo data
+│   │
+│   ├── utils/
+│   │   └── notification_utils.py
+│   │
+│   └── main.py                # FastAPI app entry point
+│
+├── .env                       # Contains DB credentials
+├── requirements.txt
+└── README.md
+🔐 Auth APIs
+/register/{role} — Register as Admin, Driver, or Employee
+
+/login — JWT-based login
+
+/me — Get current user info
+
+👩‍💼 Admin APIs
+List all drivers/employees
+
+Assign trips
+
+View analytics (total trips, completed, delay %, etc.)
+
+Approve/reject user requests (optional enhancement)
+
+🚖 Driver APIs
+Register/update driver profile
+
+View assigned trips
+
+Start/complete trip
+
+Upload documents
+
+View today's trips
+
+Update location
+
+View notifications
+
+🧑‍💼 Employee APIs
+Register/update profile
+
+View upcoming/past trips
+
+Request leave/reschedule
+
+Track ongoing trip
+
+View notifications
+
+🚗 Trip APIs
+Create trip (admin)
+
+Assign/reassign driver (admin)
+
+Reschedule trip (admin/employee)
+
+Get trip by ID
+
+List today's trips for driver or employee
+
+Trip history
+
+🔔 Notification APIs
+Send notification (admin/internal)
+
+View notification list by user
+
+Notification model: title, message, recipient_id, seen, timestamp
+
+🔧 Integration Requirements:
+✅ Configure PostgreSQL using .env
+✅ Ensure proper DB connection using session.py
+✅ Use Alembic or SQLAlchemy Base for migrations
+✅ Include init_db.py with demo data:
+
+Create 1 Admin, 2 Drivers, 3 Employees
+
+Add 2 vehicles, 3 sample trips, and 3-5 notifications
+
+🔥 Ensure clean modular separation, with each file serving a single responsibility. Focus purely on backend.
+Include inline comments for clarity.
+Prioritize scalability and clean architecture.
