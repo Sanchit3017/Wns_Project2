@@ -1,13 +1,10 @@
-"""
-Driver schemas for request/response validation
-"""
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
 
 class DriverBase(BaseModel):
-    """Base driver schema"""
+    
     name: str
     phone_number: str
     dl_number: str
@@ -15,12 +12,11 @@ class DriverBase(BaseModel):
 
 
 class DriverCreate(DriverBase):
-    """Driver creation schema"""
     pass
 
 
 class DriverUpdate(BaseModel):
-    """Driver update schema"""
+    
     name: Optional[str] = None
     phone_number: Optional[str] = None
     dl_number: Optional[str] = None
@@ -29,7 +25,7 @@ class DriverUpdate(BaseModel):
 
 
 class DriverResponse(DriverBase):
-    """Driver response schema"""
+    
     id: int
     user_id: int
     is_available: bool
@@ -41,7 +37,7 @@ class DriverResponse(DriverBase):
 
 
 class DriverRegistration(BaseModel):
-    """Driver registration schema including user creation"""
+    
     email: str
     password: str
     name: str
@@ -51,7 +47,7 @@ class DriverRegistration(BaseModel):
 
 
 class DriverWithUser(BaseModel):
-    """Driver with user information"""
+    
     id: int
     user_id: int
     name: str

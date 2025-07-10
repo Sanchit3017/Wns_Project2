@@ -1,6 +1,3 @@
-"""
-Admin API endpoints for user management and analytics
-"""
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -16,7 +13,7 @@ from typing import List
 
 
 def get_all_drivers(db: Session) -> List[DriverWithUser]:
-    """Get all drivers with user information"""
+    
     drivers = db.query(Driver).join(User).all()
     result = []
     for driver in drivers:
@@ -36,7 +33,7 @@ def get_all_drivers(db: Session) -> List[DriverWithUser]:
 
 
 def get_all_employees(db: Session) -> List[EmployeeWithUser]:
-    """Get all employees with user information"""
+    
     employees = db.query(Employee).join(User).all()
     result = []
     for employee in employees:
@@ -56,7 +53,7 @@ def get_all_employees(db: Session) -> List[EmployeeWithUser]:
 
 
 def assign_trip_to_driver(db: Session, trip_id: int, driver_id: int, vehicle_id: int) -> bool:
-    """Assign a trip to a driver and vehicle"""
+    
     trip = db.query(Trip).filter(Trip.id == trip_id).first()
     if not trip:
         raise HTTPException(
@@ -85,7 +82,7 @@ def assign_trip_to_driver(db: Session, trip_id: int, driver_id: int, vehicle_id:
 
 
 def get_trip_analytics(db: Session) -> TripStatistics:
-    """Get trip analytics and statistics"""
+    
     total_trips = db.query(Trip).count()
     completed_trips = db.query(Trip).filter(Trip.status == "completed").count()
     in_progress_trips = db.query(Trip).filter(Trip.status == "in_progress").count()
@@ -94,7 +91,7 @@ def get_trip_analytics(db: Session) -> TripStatistics:
     
     completion_rate = (completed_trips / total_trips * 100) if total_trips > 0 else 0
     
-    # Calculate delay percentage (trips that started late)
+    
     delayed_trips = db.query(Trip).filter(
         Trip.actual_start_time > Trip.scheduled_time,
         Trip.status.in_(["completed", "in_progress"])
@@ -114,7 +111,7 @@ def get_trip_analytics(db: Session) -> TripStatistics:
 
 
 def get_all_trips_with_details(db: Session) -> List[TripWithDetails]:
-    """Get all trips with detailed information"""
+    
     trips = db.query(Trip).join(Employee).outerjoin(Driver).outerjoin(Vehicle).all()
     result = []
     for trip in trips:
@@ -138,7 +135,7 @@ def get_all_trips_with_details(db: Session) -> List[TripWithDetails]:
 
 
 def toggle_user_status(db: Session, user_id: int) -> bool:
-    """Toggle user active status"""
+    
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(

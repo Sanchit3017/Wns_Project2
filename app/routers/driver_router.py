@@ -1,6 +1,3 @@
-"""
-Driver router for profile management and trip operations
-"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -19,7 +16,7 @@ security = HTTPBearer()
 
 
 def verify_driver_role(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify that the current user is a driver"""
+    
     role = get_current_user_role(credentials.credentials)
     if role != "driver":
         raise HTTPException(
@@ -34,7 +31,7 @@ async def get_profile(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_driver_role)
 ):
-    """Get driver profile"""
+    
     return get_driver_profile(db, user_id)
 
 
@@ -44,7 +41,7 @@ async def update_profile(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_driver_role)
 ):
-    """Update driver profile"""
+    
     return update_driver_profile(db, user_id, driver_update)
 
 
@@ -53,7 +50,7 @@ async def get_trips(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_driver_role)
 ):
-    """Get all assigned trips"""
+    
     return get_assigned_trips(db, user_id)
 
 
@@ -62,7 +59,7 @@ async def get_todays_trips(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_driver_role)
 ):
-    """Get today's trips"""
+    
     return get_today_trips(db, user_id)
 
 
@@ -72,7 +69,7 @@ async def start_assigned_trip(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_driver_role)
 ):
-    """Start a trip"""
+    
     success = start_trip(db, user_id, trip_id)
     return {"message": "Trip started successfully", "success": success}
 
@@ -83,7 +80,7 @@ async def complete_assigned_trip(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_driver_role)
 ):
-    """Complete a trip"""
+    
     success = complete_trip(db, user_id, trip_id)
     return {"message": "Trip completed successfully", "success": success}
 
@@ -94,7 +91,7 @@ async def update_driver_availability(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_driver_role)
 ):
-    """Update driver availability status"""
+    
     success = update_availability(db, user_id, is_available)
     return {"message": "Availability updated successfully", "is_available": is_available, "success": success}
 
@@ -104,12 +101,12 @@ async def get_driver_dashboard(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_driver_role)
 ):
-    """Get driver dashboard data"""
+    
     profile = get_driver_profile(db, user_id)
     today_trips = get_today_trips(db, user_id)
     all_trips = get_assigned_trips(db, user_id)
     
-    # Calculate statistics
+    
     completed_trips = len([trip for trip in all_trips if trip.status == "completed"])
     in_progress_trips = len([trip for trip in all_trips if trip.status == "in_progress"])
     scheduled_trips = len([trip for trip in all_trips if trip.status == "scheduled"])

@@ -1,6 +1,3 @@
-"""
-Trip API endpoints for trip management and operations
-"""
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
@@ -14,8 +11,7 @@ from typing import List
 
 
 def create_trip(db: Session, trip_data: TripCreate) -> TripResponse:
-    """Create a new trip"""
-    # Validate employee exists
+    
     employee = db.query(Employee).filter(Employee.id == trip_data.employee_id).first()
     if not employee:
         raise HTTPException(
@@ -23,7 +19,7 @@ def create_trip(db: Session, trip_data: TripCreate) -> TripResponse:
             detail="Employee not found"
         )
     
-    # Validate driver if provided
+    
     if trip_data.driver_id:
         driver = db.query(Driver).filter(Driver.id == trip_data.driver_id).first()
         if not driver:
@@ -32,7 +28,7 @@ def create_trip(db: Session, trip_data: TripCreate) -> TripResponse:
                 detail="Driver not found"
             )
     
-    # Validate vehicle if provided
+    
     if trip_data.vehicle_id:
         vehicle = db.query(Vehicle).filter(Vehicle.id == trip_data.vehicle_id).first()
         if not vehicle:
@@ -59,7 +55,7 @@ def create_trip(db: Session, trip_data: TripCreate) -> TripResponse:
 
 
 def get_trip_by_id(db: Session, trip_id: int) -> TripWithDetails:
-    """Get trip by ID with detailed information"""
+    
     trip = db.query(Trip).filter(Trip.id == trip_id).first()
     if not trip:
         raise HTTPException(
@@ -86,7 +82,7 @@ def get_trip_by_id(db: Session, trip_id: int) -> TripWithDetails:
 
 
 def update_trip(db: Session, trip_id: int, trip_update: TripUpdate) -> TripResponse:
-    """Update trip information"""
+    
     trip = db.query(Trip).filter(Trip.id == trip_id).first()
     if not trip:
         raise HTTPException(
@@ -96,7 +92,7 @@ def update_trip(db: Session, trip_id: int, trip_update: TripUpdate) -> TripRespo
     
     update_data = trip_update.dict(exclude_unset=True)
     
-    # Validate driver if being updated
+    
     if "driver_id" in update_data and update_data["driver_id"]:
         driver = db.query(Driver).filter(Driver.id == update_data["driver_id"]).first()
         if not driver:
@@ -105,7 +101,7 @@ def update_trip(db: Session, trip_id: int, trip_update: TripUpdate) -> TripRespo
                 detail="Driver not found"
             )
     
-    # Validate vehicle if being updated
+    
     if "vehicle_id" in update_data and update_data["vehicle_id"]:
         vehicle = db.query(Vehicle).filter(Vehicle.id == update_data["vehicle_id"]).first()
         if not vehicle:
@@ -131,7 +127,7 @@ def assign_trip(db: Session, trip_id: int, assignment: TripAssignment) -> TripRe
             detail="Trip not found"
         )
     
-    # Validate driver
+    
     driver = db.query(Driver).filter(Driver.id == assignment.driver_id).first()
     if not driver:
         raise HTTPException(
@@ -139,7 +135,7 @@ def assign_trip(db: Session, trip_id: int, assignment: TripAssignment) -> TripRe
             detail="Driver not found"
         )
     
-    # Validate vehicle
+    
     vehicle = db.query(Vehicle).filter(Vehicle.id == assignment.vehicle_id).first()
     if not vehicle:
         raise HTTPException(
@@ -155,7 +151,7 @@ def assign_trip(db: Session, trip_id: int, assignment: TripAssignment) -> TripRe
 
 
 def get_today_trips(db: Session) -> List[TripWithDetails]:
-    """Get all trips scheduled for today"""
+    
     today = date.today()
     trips = db.query(Trip).filter(
         func.date(Trip.scheduled_time) == today
@@ -183,7 +179,7 @@ def get_today_trips(db: Session) -> List[TripWithDetails]:
 
 
 def delete_trip(db: Session, trip_id: int) -> bool:
-    """Delete a trip"""
+    
     trip = db.query(Trip).filter(Trip.id == trip_id).first()
     if not trip:
         raise HTTPException(
@@ -203,7 +199,7 @@ def delete_trip(db: Session, trip_id: int) -> bool:
 
 
 def reschedule_trip(db: Session, trip_id: int, new_time: datetime) -> TripResponse:
-    """Reschedule a trip to a new time"""
+    
     trip = db.query(Trip).filter(Trip.id == trip_id).first()
     if not trip:
         raise HTTPException(
@@ -224,7 +220,7 @@ def reschedule_trip(db: Session, trip_id: int, new_time: datetime) -> TripRespon
 
 
 def get_trips_by_status(db: Session, status: str) -> List[TripWithDetails]:
-    """Get trips by status"""
+    
     valid_statuses = ["scheduled", "in_progress", "completed", "cancelled"]
     if status not in valid_statuses:
         raise HTTPException(

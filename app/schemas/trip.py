@@ -1,20 +1,16 @@
-"""
-Trip schemas for request/response validation
-"""
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
 
 class TripBase(BaseModel):
-    """Base trip schema"""
+    
     pickup_location: str
     destination: str
     scheduled_time: datetime
 
 
 class TripCreate(TripBase):
-    """Trip creation schema"""
     employee_id: int
     driver_id: Optional[int] = None
     vehicle_id: Optional[int] = None
@@ -22,7 +18,7 @@ class TripCreate(TripBase):
 
 
 class TripUpdate(BaseModel):
-    """Trip update schema"""
+    
     pickup_location: Optional[str] = None
     destination: Optional[str] = None
     scheduled_time: Optional[datetime] = None
@@ -33,7 +29,7 @@ class TripUpdate(BaseModel):
 
 
 class TripResponse(TripBase):
-    """Trip response schema"""
+    
     id: int
     actual_start_time: Optional[datetime]
     actual_end_time: Optional[datetime]
@@ -50,18 +46,17 @@ class TripResponse(TripBase):
 
 
 class TripAssignment(BaseModel):
-    """Trip assignment schema"""
+    
     driver_id: int
     vehicle_id: int
 
 
 class TripStatusUpdate(BaseModel):
-    """Trip status update schema"""
-    status: str  # scheduled, in_progress, completed, cancelled
+    status: str  
 
 
 class TripWithDetails(BaseModel):
-    """Trip with employee, driver, and vehicle details"""
+    
     id: int
     pickup_location: str
     destination: str
@@ -82,7 +77,6 @@ class TripWithDetails(BaseModel):
 
 
 class TripStatistics(BaseModel):
-    """Trip statistics schema"""
     total_trips: int
     completed_trips: int
     in_progress_trips: int

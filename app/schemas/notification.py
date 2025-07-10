@@ -1,29 +1,25 @@
-"""
-Notification schemas for request/response validation
-"""
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
 
 class NotificationBase(BaseModel):
-    """Base notification schema"""
+    
     title: str
     message: str
 
 
 class NotificationCreate(NotificationBase):
-    """Notification creation schema"""
     recipient_id: int
 
 
 class NotificationUpdate(BaseModel):
-    """Notification update schema"""
+    
     seen: bool
 
 
 class NotificationResponse(NotificationBase):
-    """Notification response schema"""
+    
     id: int
     recipient_id: int
     seen: bool
@@ -34,7 +30,7 @@ class NotificationResponse(NotificationBase):
 
 
 class NotificationWithRecipient(BaseModel):
-    """Notification with recipient information"""
+    
     id: int
     title: str
     message: str
@@ -48,8 +44,7 @@ class NotificationWithRecipient(BaseModel):
 
 
 class BulkNotification(BaseModel):
-    """Bulk notification schema"""
     title: str
     message: str
-    recipient_role: Optional[str] = None  # Send to all users of specific role
-    recipient_ids: Optional[list[int]] = None  # Send to specific users
+    recipient_role: Optional[str] = None  
+    recipient_ids: Optional[list[int]] = None  

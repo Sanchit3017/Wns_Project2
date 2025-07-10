@@ -1,6 +1,3 @@
-"""
-Admin router for user management and analytics
-"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -20,7 +17,7 @@ security = HTTPBearer()
 
 
 def verify_admin_role(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify that the current user is an admin"""
+    
     role = get_current_user_role(credentials.credentials)
     if role != "admin":
         raise HTTPException(
@@ -35,7 +32,7 @@ async def list_all_drivers(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_role)
 ):
-    """Get list of all drivers with user information"""
+    
     return get_all_drivers(db)
 
 
@@ -44,7 +41,7 @@ async def list_all_employees(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_role)
 ):
-    """Get list of all employees with user information"""
+    
     return get_all_employees(db)
 
 
@@ -55,7 +52,7 @@ async def assign_trip(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_role)
 ):
-    """Assign a trip to a driver and vehicle"""
+    
     success = assign_trip_to_driver(db, trip_id, assignment.driver_id, assignment.vehicle_id)
     return {"message": "Trip assigned successfully", "success": success}
 
@@ -65,7 +62,7 @@ async def get_analytics(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_role)
 ):
-    """Get trip analytics and statistics"""
+    
     return get_trip_analytics(db)
 
 
@@ -74,7 +71,7 @@ async def list_all_trips(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_role)
 ):
-    """Get list of all trips with detailed information"""
+    
     return get_all_trips_with_details(db)
 
 
@@ -84,7 +81,7 @@ async def toggle_user_active_status(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_role)
 ):
-    """Toggle user active status"""
+    
     new_status = toggle_user_status(db, user_id)
     return {"message": "User status updated", "is_active": new_status}
 
@@ -94,9 +91,9 @@ async def get_admin_dashboard(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_role)
 ):
-    """Get admin dashboard data"""
+    
     analytics = get_trip_analytics(db)
-    recent_trips = get_all_trips_with_details(db)[:10]  # Last 10 trips
+    recent_trips = get_all_trips_with_details(db)[:10]  
     
     return {
         "analytics": analytics,

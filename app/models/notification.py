@@ -1,6 +1,3 @@
-"""
-Notification model for system communications
-"""
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -8,7 +5,7 @@ from app.database.base import Base
 
 
 class Notification(Base):
-    """Notification model for system messages"""
+    
     __tablename__ = "notifications"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -18,7 +15,7 @@ class Notification(Base):
     seen = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    # Relationships
+    
     recipient = relationship("User", backref="notifications")
     
     def __repr__(self):

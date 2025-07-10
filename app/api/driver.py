@@ -1,6 +1,3 @@
-"""
-Driver API endpoints for profile management and trip operations
-"""
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
@@ -14,7 +11,7 @@ from typing import List
 
 
 def get_driver_profile(db: Session, user_id: int) -> DriverResponse:
-    """Get driver profile by user ID"""
+    
     driver = db.query(Driver).filter(Driver.user_id == user_id).first()
     if not driver:
         raise HTTPException(
@@ -25,7 +22,7 @@ def get_driver_profile(db: Session, user_id: int) -> DriverResponse:
 
 
 def update_driver_profile(db: Session, user_id: int, driver_update: DriverUpdate) -> DriverResponse:
-    """Update driver profile"""
+    
     driver = db.query(Driver).filter(Driver.user_id == user_id).first()
     if not driver:
         raise HTTPException(
@@ -43,7 +40,7 @@ def update_driver_profile(db: Session, user_id: int, driver_update: DriverUpdate
 
 
 def get_assigned_trips(db: Session, user_id: int) -> List[TripWithDetails]:
-    """Get all trips assigned to the driver"""
+    
     driver = db.query(Driver).filter(Driver.user_id == user_id).first()
     if not driver:
         raise HTTPException(
@@ -74,7 +71,7 @@ def get_assigned_trips(db: Session, user_id: int) -> List[TripWithDetails]:
 
 
 def get_today_trips(db: Session, user_id: int) -> List[TripWithDetails]:
-    """Get today's trips for the driver"""
+    
     driver = db.query(Driver).filter(Driver.user_id == user_id).first()
     if not driver:
         raise HTTPException(
@@ -112,7 +109,7 @@ def get_today_trips(db: Session, user_id: int) -> List[TripWithDetails]:
 
 
 def start_trip(db: Session, user_id: int, trip_id: int) -> bool:
-    """Start a trip (mark as in progress)"""
+    
     driver = db.query(Driver).filter(Driver.user_id == user_id).first()
     if not driver:
         raise HTTPException(
@@ -142,7 +139,7 @@ def start_trip(db: Session, user_id: int, trip_id: int) -> bool:
 
 
 def complete_trip(db: Session, user_id: int, trip_id: int) -> bool:
-    """Complete a trip (mark as completed)"""
+    
     driver = db.query(Driver).filter(Driver.user_id == user_id).first()
     if not driver:
         raise HTTPException(

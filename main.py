@@ -1,6 +1,3 @@
-"""
-Main FastAPI application entry point for Travel Management System
-"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -17,17 +14,17 @@ from app.routers import (
     notification_router
 )
 
-# Create database tables
+
 Base.metadata.create_all(bind=engine)
 
-# Initialize FastAPI app
+
 app = FastAPI(
     title=settings.APP_NAME,
     description="City-based Employee Travel Management System",
     version="1.0.0"
 )
 
-# Configure CORS
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -36,7 +33,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+
 app.include_router(auth_router.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(admin_router.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(driver_router.router, prefix="/api/driver", tags=["Driver"])
@@ -46,17 +43,17 @@ app.include_router(notification_router.router, prefix="/api/notifications", tags
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database with sample data on startup"""
+    
     init_database()
 
 @app.get("/")
 async def root():
-    """Root endpoint"""
+    
     return {"message": "Travel Management System API", "version": "1.0.0"}
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    
     return {"status": "healthy"}
 
 if __name__ == "__main__":

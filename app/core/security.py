@@ -1,6 +1,3 @@
-"""
-Security utilities for JWT token handling and password management
-"""
 from datetime import datetime, timedelta
 from typing import Optional, Union
 from jose import JWTError, jwt
@@ -8,7 +5,7 @@ from passlib.context import CryptContext
 from fastapi import HTTPException, status
 from app.core.config import settings
 
-# Password hashing context
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
