@@ -1,6 +1,3 @@
-"""
-Employee router for profile management and trip viewing
-"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -19,7 +16,7 @@ security = HTTPBearer()
 
 
 def verify_employee_role(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify that the current user is an employee"""
+    
     role = get_current_user_role(credentials.credentials)
     if role != "employee":
         raise HTTPException(
@@ -34,7 +31,7 @@ async def get_profile(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_employee_role)
 ):
-    """Get employee profile"""
+    
     return get_employee_profile(db, user_id)
 
 
@@ -44,7 +41,7 @@ async def update_profile(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_employee_role)
 ):
-    """Update employee profile"""
+    
     return update_employee_profile(db, user_id, employee_update)
 
 
@@ -53,7 +50,7 @@ async def get_upcoming_employee_trips(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_employee_role)
 ):
-    """Get upcoming trips"""
+    
     return get_upcoming_trips(db, user_id)
 
 
@@ -62,7 +59,7 @@ async def get_past_employee_trips(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_employee_role)
 ):
-    """Get past trips"""
+    
     return get_past_trips(db, user_id)
 
 
@@ -72,7 +69,7 @@ async def get_employee_trip_history(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_employee_role)
 ):
-    """Get complete trip history"""
+    
     return get_trip_history(db, user_id, limit)
 
 
@@ -81,7 +78,7 @@ async def get_current_ongoing_trip(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_employee_role)
 ):
-    """Get current ongoing trip for the employee"""
+    
     return get_current_trip(db, user_id)
 
 
@@ -92,7 +89,7 @@ async def request_reschedule(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_employee_role)
 ):
-    """Request trip reschedule"""
+    
     success = request_trip_reschedule(
         db, user_id, trip_id, 
         reschedule_request.new_scheduled_time, 
@@ -106,20 +103,20 @@ async def get_employee_dashboard(
     db: Session = Depends(get_db),
     user_id: int = Depends(verify_employee_role)
 ):
-    """Get employee dashboard data"""
+    
     profile = get_employee_profile(db, user_id)
     upcoming_trips = get_upcoming_trips(db, user_id)
     past_trips = get_past_trips(db, user_id)
     
-    # Try to get current ongoing trip
+    
     current_trip = None
     try:
         current_trip = get_current_trip(db, user_id)
     except HTTPException:
-        # No ongoing trip found
+        
         pass
     
-    # Calculate statistics
+    
     completed_trips = len([trip for trip in past_trips if trip.status == "completed"])
     cancelled_trips = len([trip for trip in past_trips if trip.status == "cancelled"])
     scheduled_trips = len([trip for trip in upcoming_trips if trip.status == "scheduled"])
@@ -127,7 +124,7 @@ async def get_employee_dashboard(
     return {
         "profile": profile,
         "current_trip": current_trip,
-        "upcoming_trips": upcoming_trips[:5],  # Next 5 trips
+        "upcoming_trips": upcoming_trips[:5],  
         "stats": {
             "total_trips": len(past_trips) + len(upcoming_trips),
             "completed_trips": completed_trips,

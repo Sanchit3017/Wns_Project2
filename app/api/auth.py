@@ -1,6 +1,3 @@
-"""
-Authentication API endpoints
-"""
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database.session import get_db
@@ -14,7 +11,7 @@ from app.core.security import verify_password, get_password_hash, create_access_
 
 
 def authenticate_user(db: Session, email: str, password: str) -> User:
-    """Authenticate user with email and password"""
+    
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(
@@ -35,8 +32,7 @@ def authenticate_user(db: Session, email: str, password: str) -> User:
 
 
 def register_user(db: Session, role: str, user_data: dict) -> Token:
-    """Register a new user with specific role"""
-    # Check if user already exists
+    
     existing_user = db.query(User).filter(User.email == user_data["email"]).first()
     if existing_user:
         raise HTTPException(
@@ -44,7 +40,7 @@ def register_user(db: Session, role: str, user_data: dict) -> Token:
             detail="Email already registered"
         )
     
-    # Create user
+    
     hashed_password = get_password_hash(user_data["password"])
     user = User(
         email=user_data["email"],
@@ -55,7 +51,7 @@ def register_user(db: Session, role: str, user_data: dict) -> Token:
     db.add(user)
     db.flush()
     
-    # Create role-specific profile
+    
     if role == "driver":
         driver = Driver(
             user_id=user.id,
@@ -78,7 +74,7 @@ def register_user(db: Session, role: str, user_data: dict) -> Token:
     
     db.commit()
     
-    # Create access token
+    
     access_token = create_access_token(
         data={"sub": str(user.id), "email": user.email, "role": user.role}
     )
@@ -91,10 +87,10 @@ def register_user(db: Session, role: str, user_data: dict) -> Token:
 
 
 def login_user(db: Session, email: str, password: str) -> Token:
-    """Login user and return JWT token"""
+    
     user = authenticate_user(db, email, password)
     
-    # Create access token
+    
     access_token = create_access_token(
         data={"sub": str(user.id), "email": user.email, "role": user.role}
     )
@@ -107,7 +103,7 @@ def login_user(db: Session, email: str, password: str) -> Token:
 
 
 def get_current_user(db: Session, user_id: int) -> User:
-    """Get current user by ID"""
+    
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(

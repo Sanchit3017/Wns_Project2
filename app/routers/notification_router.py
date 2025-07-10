@@ -1,6 +1,3 @@
-"""
-Notification router for system communications
-"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -22,14 +19,14 @@ security = HTTPBearer()
 
 
 def get_current_user_info(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Get current user ID and role"""
+    
     user_id = get_current_user_id(credentials.credentials)
     role = get_current_user_role(credentials.credentials)
     return {"user_id": user_id, "role": role}
 
 
 def verify_admin_role(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify that the current user is an admin"""
+    
     role = get_current_user_role(credentials.credentials)
     if role != "admin":
         raise HTTPException(
@@ -45,7 +42,7 @@ async def create_new_notification(
     db: Session = Depends(get_db),
     _: int = Depends(verify_admin_role)
 ):
-    """Create a new notification (Admin only)"""
+    
     return create_notification(db, notification_data)
 
 
@@ -55,7 +52,7 @@ async def send_bulk_notifications(
     db: Session = Depends(get_db),
     _: int = Depends(verify_admin_role)
 ):
-    """Send bulk notifications (Admin only)"""
+    
     return send_bulk_notification(db, bulk_notification)
 
 
@@ -65,7 +62,7 @@ async def get_notifications(
     db: Session = Depends(get_db),
     user_info: dict = Depends(get_current_user_info)
 ):
-    """Get notifications for current user"""
+    
     return get_user_notifications(db, user_info["user_id"], include_seen)
 
 
@@ -74,7 +71,7 @@ async def get_all_notifications(
     db: Session = Depends(get_db),
     _: int = Depends(verify_admin_role)
 ):
-    """Get all notifications with recipient information (Admin only)"""
+    
     return get_all_notifications_with_recipients(db)
 
 
@@ -83,7 +80,7 @@ async def get_unread_notifications_count(
     db: Session = Depends(get_db),
     user_info: dict = Depends(get_current_user_info)
 ):
-    """Get count of unread notifications"""
+    
     count = get_unread_count(db, user_info["user_id"])
     return {"unread_count": count}
 
@@ -94,7 +91,7 @@ async def mark_notification_seen(
     db: Session = Depends(get_db),
     user_info: dict = Depends(get_current_user_info)
 ):
-    """Mark a notification as seen"""
+    
     success = mark_notification_as_seen(db, user_info["user_id"], notification_id)
     return {"message": "Notification marked as seen", "success": success}
 
@@ -104,7 +101,7 @@ async def mark_all_notifications_seen(
     db: Session = Depends(get_db),
     user_info: dict = Depends(get_current_user_info)
 ):
-    """Mark all notifications as seen"""
+    
     success = mark_all_notifications_as_seen(db, user_info["user_id"])
     return {"message": "All notifications marked as seen", "success": success}
 
@@ -115,6 +112,6 @@ async def delete_user_notification(
     db: Session = Depends(get_db),
     user_info: dict = Depends(get_current_user_info)
 ):
-    """Delete a notification"""
+    
     success = delete_notification(db, user_info["user_id"], notification_id)
     return {"message": "Notification deleted successfully", "success": success}

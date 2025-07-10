@@ -1,13 +1,10 @@
-"""
-Employee schemas for request/response validation
-"""
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
 
 class EmployeeBase(BaseModel):
-    """Base employee schema"""
+  
     name: str
     employee_id: str
     phone_number: str
@@ -16,12 +13,10 @@ class EmployeeBase(BaseModel):
 
 
 class EmployeeCreate(EmployeeBase):
-    """Employee creation schema"""
     pass
 
 
 class EmployeeUpdate(BaseModel):
-    """Employee update schema"""
     name: Optional[str] = None
     phone_number: Optional[str] = None
     home_location: Optional[str] = None
@@ -29,7 +24,7 @@ class EmployeeUpdate(BaseModel):
 
 
 class EmployeeResponse(EmployeeBase):
-    """Employee response schema"""
+    
     id: int
     user_id: int
     created_at: datetime
@@ -40,7 +35,7 @@ class EmployeeResponse(EmployeeBase):
 
 
 class EmployeeRegistration(BaseModel):
-    """Employee registration schema including user creation"""
+    
     email: str
     password: str
     name: str
@@ -51,7 +46,7 @@ class EmployeeRegistration(BaseModel):
 
 
 class EmployeeWithUser(BaseModel):
-    """Employee with user information"""
+    "
     id: int
     user_id: int
     name: str
@@ -68,14 +63,14 @@ class EmployeeWithUser(BaseModel):
 
 
 class LeaveRequest(BaseModel):
-    """Leave request schema"""
+    
     start_date: datetime
     end_date: datetime
     reason: str
 
 
 class RescheduleRequest(BaseModel):
-    """Reschedule request schema"""
+    
     trip_id: int
     new_scheduled_time: datetime
     reason: str

@@ -1,6 +1,3 @@
-"""
-Database initialization with sample data
-"""
 from sqlalchemy.orm import Session
 from app.database.session import SessionLocal
 from app.models.user import User
@@ -14,15 +11,15 @@ from datetime import datetime, timedelta
 
 
 def init_database():
-    """Initialize database with sample data"""
+    
     db: Session = SessionLocal()
     
     try:
-        # Check if data already exists
+        
         if db.query(User).first():
             return
         
-        # Create Admin user
+        
         admin_user = User(
             email="admin@travel.com",
             hashed_password=get_password_hash("admin123"),
@@ -32,7 +29,7 @@ def init_database():
         db.add(admin_user)
         db.flush()
         
-        # Create Driver users
+        
         driver1_user = User(
             email="driver1@travel.com",
             hashed_password=get_password_hash("driver123"),
@@ -51,7 +48,7 @@ def init_database():
         db.add(driver2_user)
         db.flush()
         
-        # Create Employee users
+        
         employee1_user = User(
             email="employee1@travel.com",
             hashed_password=get_password_hash("emp123"),
@@ -79,7 +76,7 @@ def init_database():
         db.add(employee3_user)
         db.flush()
         
-        # Create Driver profiles
+        
         driver1 = Driver(
             user_id=driver1_user.id,
             name="John Driver",
@@ -98,7 +95,7 @@ def init_database():
         )
         db.add(driver2)
         
-        # Create Employee profiles
+       
         employee1 = Employee(
             user_id=employee1_user.id,
             name="Alice Employee",
@@ -129,7 +126,7 @@ def init_database():
         )
         db.add(employee3)
         
-        # Create Vehicles
+        
         vehicle1 = Vehicle(
             plate_number="ABC123",
             vehicle_type="Sedan",
@@ -148,7 +145,7 @@ def init_database():
         
         db.flush()
         
-        # Create Sample Trips
+        
         trip1 = Trip(
             pickup_location="Downtown Office",
             destination="Airport",
@@ -186,7 +183,7 @@ def init_database():
         
         db.flush()
         
-        # Create Sample Notifications
+        
         notifications = [
             Notification(
                 title="Trip Assignment",
@@ -223,7 +220,7 @@ def init_database():
         for notification in notifications:
             db.add(notification)
         
-        # Commit all changes
+       
         db.commit()
         print("Database initialized with sample data successfully!")
         

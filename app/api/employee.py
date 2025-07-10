@@ -1,6 +1,3 @@
-"""
-Employee API endpoints for profile management and trip viewing
-"""
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
@@ -14,7 +11,7 @@ from typing import List
 
 
 def get_employee_profile(db: Session, user_id: int) -> EmployeeResponse:
-    """Get employee profile by user ID"""
+    
     employee = db.query(Employee).filter(Employee.user_id == user_id).first()
     if not employee:
         raise HTTPException(
@@ -25,7 +22,7 @@ def get_employee_profile(db: Session, user_id: int) -> EmployeeResponse:
 
 
 def update_employee_profile(db: Session, user_id: int, employee_update: EmployeeUpdate) -> EmployeeResponse:
-    """Update employee profile"""
+    
     employee = db.query(Employee).filter(Employee.user_id == user_id).first()
     if not employee:
         raise HTTPException(
@@ -43,7 +40,7 @@ def update_employee_profile(db: Session, user_id: int, employee_update: Employee
 
 
 def get_upcoming_trips(db: Session, user_id: int) -> List[TripWithDetails]:
-    """Get upcoming trips for the employee"""
+    
     employee = db.query(Employee).filter(Employee.user_id == user_id).first()
     if not employee:
         raise HTTPException(
@@ -82,7 +79,7 @@ def get_upcoming_trips(db: Session, user_id: int) -> List[TripWithDetails]:
 
 
 def get_past_trips(db: Session, user_id: int) -> List[TripWithDetails]:
-    """Get past trips for the employee"""
+    
     employee = db.query(Employee).filter(Employee.user_id == user_id).first()
     if not employee:
         raise HTTPException(
@@ -119,7 +116,7 @@ def get_past_trips(db: Session, user_id: int) -> List[TripWithDetails]:
 
 
 def get_current_trip(db: Session, user_id: int) -> TripWithDetails:
-    """Get current ongoing trip for the employee"""
+    
     employee = db.query(Employee).filter(Employee.user_id == user_id).first()
     if not employee:
         raise HTTPException(
@@ -159,7 +156,7 @@ def get_current_trip(db: Session, user_id: int) -> TripWithDetails:
 
 
 def request_trip_reschedule(db: Session, user_id: int, trip_id: int, new_time: datetime, reason: str) -> bool:
-    """Request trip reschedule (creates a notification for admin)"""
+    
     employee = db.query(Employee).filter(Employee.user_id == user_id).first()
     if not employee:
         raise HTTPException(
@@ -182,7 +179,7 @@ def request_trip_reschedule(db: Session, user_id: int, trip_id: int, new_time: d
             detail="Cannot reschedule trip in current status"
         )
     
-    # Add reschedule note to trip
+    
     reschedule_note = f"Reschedule requested by {employee.name} for {new_time}. Reason: {reason}"
     if trip.notes:
         trip.notes += f"\n{reschedule_note}"
@@ -194,7 +191,7 @@ def request_trip_reschedule(db: Session, user_id: int, trip_id: int, new_time: d
 
 
 def get_trip_history(db: Session, user_id: int, limit: int = 50) -> List[TripWithDetails]:
-    """Get complete trip history for the employee"""
+    
     employee = db.query(Employee).filter(Employee.user_id == user_id).first()
     if not employee:
         raise HTTPException(

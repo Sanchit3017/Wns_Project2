@@ -1,6 +1,3 @@
-"""
-Trip router for trip management and operations
-"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -19,7 +16,7 @@ security = HTTPBearer()
 
 
 def verify_admin_or_employee_role(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify that the current user is admin or employee"""
+    
     role = get_current_user_role(credentials.credentials)
     if role not in ["admin", "employee"]:
         raise HTTPException(
@@ -30,7 +27,7 @@ def verify_admin_or_employee_role(credentials: HTTPAuthorizationCredentials = De
 
 
 def verify_admin_role(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify that the current user is an admin"""
+    
     role = get_current_user_role(credentials.credentials)
     if role != "admin":
         raise HTTPException(
@@ -46,7 +43,7 @@ async def create_new_trip(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_role)
 ):
-    """Create a new trip (Admin only)"""
+    
     return create_trip(db, trip_data)
 
 
@@ -56,7 +53,7 @@ async def get_trip(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_or_employee_role)
 ):
-    """Get trip by ID"""
+    
     return get_trip_by_id(db, trip_id)
 
 
@@ -67,7 +64,7 @@ async def update_existing_trip(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_role)
 ):
-    """Update trip information (Admin only)"""
+    
     return update_trip(db, trip_id, trip_update)
 
 
@@ -78,7 +75,7 @@ async def assign_trip_to_driver(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_role)
 ):
-    """Assign trip to driver and vehicle (Admin only)"""
+    
     trip = assign_trip(db, trip_id, assignment)
     return {"message": "Trip assigned successfully", "trip": trip}
 
@@ -89,7 +86,7 @@ async def delete_existing_trip(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_role)
 ):
-    """Delete a trip (Admin only)"""
+    
     success = delete_trip(db, trip_id)
     return {"message": "Trip deleted successfully", "success": success}
 
@@ -101,7 +98,7 @@ async def reschedule_existing_trip(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_role)
 ):
-    """Reschedule a trip (Admin only)"""
+    
     trip = reschedule_trip(db, trip_id, new_time)
     return {"message": "Trip rescheduled successfully", "trip": trip}
 
@@ -112,7 +109,7 @@ async def list_trips(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_or_employee_role)
 ):
-    """List trips, optionally filtered by status"""
+    
     if status:
         return get_trips_by_status(db, status)
     else:
@@ -124,7 +121,7 @@ async def get_all_today_trips(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_or_employee_role)
 ):
-    """Get all trips scheduled for today"""
+   
     return get_today_trips(db)
 
 
@@ -134,5 +131,5 @@ async def get_trips_with_status(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin_or_employee_role)
 ):
-    """Get trips by status"""
+    
     return get_trips_by_status(db, status)
