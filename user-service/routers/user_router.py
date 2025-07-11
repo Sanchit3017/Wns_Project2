@@ -20,7 +20,7 @@ from shared.schemas.user import (
     EmployeeUpdate, EmployeeWithUser, LocationBasedDriverSearch,
     IdentityVerificationUpdate, DriverCreate, EmployeeCreate,
     AdminResponse, AdminUpdate, AdminWithUser, AdminCreate,
-    UserStatusUpdate, VehicleAssignment, SystemStatistics
+    UserStatusUpdate, SystemStatistics
 )
 from typing import List, Optional
 import os
@@ -335,13 +335,3 @@ async def admin_get_statistics(
     return await get_admin_dashboard(db)
 
 
-@router.delete("/admin/vehicles/{vehicle_id}/assign")
-async def unassign_vehicle_endpoint(
-    vehicle_id: int,
-    user_context: dict = Depends(get_user_context),
-    db: Session = Depends(get_db)
-):
-    """Remove vehicle assignment (admin only)"""
-    if user_context["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-    return unassign_vehicle_from_driver(db, vehicle_id)

@@ -20,7 +20,7 @@ async def create_trip(db: Session, trip_data: TripCreate) -> TripResponse:
         scheduled_time=trip_data.scheduled_time,
         employee_id=trip_data.employee_id,
         driver_id=trip_data.driver_id,
-        vehicle_id=trip_data.vehicle_id,
+        vehicle_id=None,  # Vehicle will be assigned later by admin
         notes=trip_data.notes
     )
     db.add(db_trip)

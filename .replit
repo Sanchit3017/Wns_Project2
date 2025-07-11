@@ -20,6 +20,10 @@ args = "FastAPI Server"
 task = "workflow.run"
 args = "Microservices"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Travel Management API"
+
 [[workflows.workflow]]
 name = "FastAPI Server"
 author = "agent"
@@ -32,6 +36,15 @@ waitForPort = 5000
 
 [[workflows.workflow]]
 name = "Microservices"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_microservices.py"
+waitForPort = 8000
+
+[[workflows.workflow]]
+name = "Travel Management API"
 author = "agent"
 
 [[workflows.workflow.tasks]]
