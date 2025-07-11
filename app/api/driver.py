@@ -180,3 +180,57 @@ def update_availability(db: Session, user_id: int, is_available: bool) -> bool:
     driver.is_available = is_available
     db.commit()
     return True
+
+
+def search_drivers_by_location(db: Session, employee_location: str) -> List[dict]:
+    """Search for available drivers based on employee location"""
+    from app.models.user import User
+    import re
+    
+    # Get all available drivers with their service areas
+    drivers = db.query(Driver).join(User).filter(
+        User.is_active == True,
+        Driver.is_available == True,
+        Driver.service_area.is_not(None)
+    ).all()
+    
+    # Simple location matching algorithm
+    employee_location = employee_location.lower()
+    matched_drivers = []
+    
+    for driver in drivers:
+        service_area = driver.service_area.lower()
+        
+        # Calculate distance score based on string similarity and keyword matching
+        distance_score = 1.0  # Default high score (far)
+        
+        # Exact match (best score)
+        if employee_location == service_area:
+            distance_score = 0.1
+        # Partial match
+        elif employee_location in service_area or service_area in employee_location:
+            distance_score = 0.3
+        # Word matching
+        else:
+            employee_words = set(re.findall(r'\b\w+\b', employee_location))
+            service_words = set(re.findall(r'\b\w+\b', service_area))
+            common_words = employee_words.intersection(service_words)
+            
+            if common_words:
+                distance_score = 0.6 - (len(common_words) * 0.1)
+            else:
+                distance_score = 0.9
+        
+        matched_drivers.append({
+            "id": driver.id,
+            "name": driver.name,
+            "phone_number": driver.phone_number,
+            "service_area": driver.service_area,
+            "is_available": driver.is_available,
+            "distance_score": distance_score
+        })
+    
+    # Sort by distance score (lower is better)
+    matched_drivers.sort(key=lambda x: x["distance_score"])
+    
+    return matched_drivers

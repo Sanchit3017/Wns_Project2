@@ -4,15 +4,18 @@
 
 This is a city-based employee travel management system built with FastAPI, SQLAlchemy, and PostgreSQL. The system manages transportation for employees with role-based access control for admins, drivers, and employees. It handles trip scheduling, driver assignments, vehicle management, and real-time notifications.
 
-## Recent Changes (July 10, 2025)
+## Recent Changes (July 11, 2025)
 
-✓ Updated application name to "Travel Management - WNS"
-✓ Added ongoing trip tracking functionality to employee API
-✓ Added `/api/employee/trips/current` endpoint to get current ongoing trip
-✓ Enhanced employee dashboard to include current trip tracking
-✓ Configured application to run on port 5000 for Replit deployment
-✓ Fixed Pydantic configuration to ignore extra environment variables
-✓ Successfully deployed with PostgreSQL database integration
+✓ Added driver identity verification system with document upload capability
+✓ Implemented location-based driver assignment for admin users
+✓ Added service_area field to driver profiles for location matching
+✓ Created `/api/driver/upload-identity` endpoint for PDF/image uploads
+✓ Added `/api/admin/drivers/search-by-location` for location-based driver search
+✓ Added `/api/admin/drivers/{id}/verify-identity` for admin verification approval
+✓ Fixed database schema boolean type issues for is_available fields
+✓ Enhanced driver registration to include service area information
+✓ Added automatic notification system for verification status updates
+✓ Successfully tested all new features with file uploads and location matching
 
 ## User Preferences
 
@@ -68,20 +71,34 @@ FastAPI routers with role-based access control:
 ## Data Flow
 
 ### User Registration & Authentication
-1. User registers with role-specific information
+1. User registers with role-specific information (including service area for drivers)
 2. System creates base User record and role-specific profile
 3. JWT token issued for authenticated sessions
 4. Role-based access enforced on subsequent requests
 
+### Driver Identity Verification Workflow
+1. Driver uploads identity documents (PDF, JPG, PNG, DOC formats supported)
+2. Files stored securely in uploads/identity_proofs directory
+3. Admin reviews and approves/rejects verification
+4. System sends notification to driver about verification status
+5. Verified drivers eligible for trip assignments
+
+### Location-Based Assignment Workflow
+1. Admin searches for drivers by employee location
+2. System matches drivers based on service area proximity
+3. Distance scoring algorithm ranks drivers by relevance
+4. Admin assigns best-matched driver to trip
+5. Location-aware trip optimization
+
 ### Trip Management Workflow
 1. Admin creates trips for employees
-2. Admin assigns drivers and vehicles to trips
+2. Admin uses location-based search to find suitable drivers
 3. Driver receives trip notifications
 4. Driver updates trip status (start/complete)
 5. System tracks trip history and analytics
 
 ### Notification System
-1. System generates notifications for trip updates
+1. System generates notifications for trip updates and verification status
 2. Role-based notification targeting
 3. Mark as read/unread functionality
 4. Bulk notification capabilities for admins

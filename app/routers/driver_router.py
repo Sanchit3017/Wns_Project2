@@ -1,6 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+import os
+import shutil
+from datetime import datetime
 from app.database.session import get_db
 from app.api.driver import (
     get_driver_profile, update_driver_profile, get_assigned_trips,
@@ -94,6 +97,54 @@ async def update_driver_availability(
     
     success = update_availability(db, user_id, is_available)
     return {"message": "Availability updated successfully", "is_available": is_available, "success": success}
+
+
+@router.post("/upload-identity")
+async def upload_identity_proof(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(verify_driver_role)
+):
+    """Upload identity proof document for verification"""
+    # Validate file type
+    allowed_extensions = {'.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'}
+    file_extension = os.path.splitext(file.filename)[1].lower()
+    
+    if file_extension not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file type. Allowed: PDF, JPG, PNG, DOC, DOCX"
+        )
+    
+    # Create uploads directory if it doesn't exist
+    upload_dir = "uploads/identity_proofs"
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    # Generate unique filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"driver_{user_id}_{timestamp}{file_extension}"
+    file_path = os.path.join(upload_dir, filename)
+    
+    # Save file
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        # Update driver record with file path
+        from app.models.driver import Driver
+        driver = db.query(Driver).filter(Driver.user_id == user_id).first()
+        if driver:
+            driver.identity_proof_url = file_path
+            driver.identity_proof_status = "pending"
+            db.commit()
+            
+        return {
+            "message": "Identity proof uploaded successfully",
+            "filename": filename,
+            "status": "pending_verification"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
 
 
 @router.get("/dashboard")
