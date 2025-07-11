@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean
+
+from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.sql import func
 from shared.database.base import Base
 
@@ -15,7 +16,7 @@ class Trip(Base):
     notes = Column(Text, nullable=True)
     
     # References to other services (using IDs instead of foreign keys)
-    # These are just integer references, no foreign key constraints
+    # NO FOREIGN KEY CONSTRAINTS - just integer references
     employee_id = Column(Integer, nullable=False, index=True)
     driver_id = Column(Integer, nullable=True, index=True)
     vehicle_id = Column(Integer, nullable=True, index=True)
