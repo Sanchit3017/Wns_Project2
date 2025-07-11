@@ -23,6 +23,7 @@ args = "Microservices"
 [[workflows.workflow]]
 name = "FastAPI Server"
 author = "agent"
+mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -44,7 +45,6 @@ externalPort = 5000
 
 [[ports]]
 localPort = 8000
-externalPort = 80
 
 [[ports]]
 localPort = 8001
