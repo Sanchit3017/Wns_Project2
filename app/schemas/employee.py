@@ -46,7 +46,7 @@ class EmployeeRegistration(BaseModel):
 
 
 class EmployeeWithUser(BaseModel):
-    "
+    
     id: int
     user_id: int
     name: str
