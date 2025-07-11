@@ -15,9 +15,10 @@ class Trip(Base):
     notes = Column(Text, nullable=True)
     
     # References to other services (using IDs instead of foreign keys)
-    employee_id = Column(Integer, nullable=False)
-    driver_id = Column(Integer, nullable=True)
-    vehicle_id = Column(Integer, nullable=True)
+    # These are just integer references, no foreign key constraints
+    employee_id = Column(Integer, nullable=False, index=True)
+    driver_id = Column(Integer, nullable=True, index=True)
+    vehicle_id = Column(Integer, nullable=True, index=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
