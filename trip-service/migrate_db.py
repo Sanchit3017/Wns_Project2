@@ -3,66 +3,61 @@
 """
 Database migration script to remove foreign key constraints from trips table
 """
-import os
+
 import sys
-from pathlib import Path
-
-# Add shared directory to path
-current_dir = Path(__file__).parent.absolute()
-project_root = current_dir.parent
-sys.path.insert(0, str(project_root))
-
+import os
 from sqlalchemy import create_engine, text
 from shared.config import TripServiceSettings
 
-def migrate_database():
-    """Remove foreign key constraints from trips table"""
+def drop_foreign_keys():
+    """Drop foreign key constraints from trips table"""
     settings = TripServiceSettings()
     engine = create_engine(settings.DATABASE_URL)
     
+    print("🔧 Dropping foreign key constraints from trips table...")
+    
+    # SQL commands to drop foreign key constraints
+    drop_constraints_sql = [
+        "ALTER TABLE trips DROP CONSTRAINT IF EXISTS trips_employee_id_fkey;",
+        "ALTER TABLE trips DROP CONSTRAINT IF EXISTS trips_driver_id_fkey;", 
+        "ALTER TABLE trips DROP CONSTRAINT IF EXISTS trips_vehicle_id_fkey;",
+        "ALTER TABLE trips DROP CONSTRAINT IF EXISTS fk_trips_employee_id;",
+        "ALTER TABLE trips DROP CONSTRAINT IF EXISTS fk_trips_driver_id;",
+        "ALTER TABLE trips DROP CONSTRAINT IF EXISTS fk_trips_vehicle_id;"
+    ]
+    
     try:
-        with engine.connect() as connection:
-            # Start a transaction
-            trans = connection.begin()
+        with engine.connect() as conn:
+            for sql in drop_constraints_sql:
+                try:
+                    conn.execute(text(sql))
+                    print(f"✅ Executed: {sql}")
+                except Exception as e:
+                    print(f"⚠️  Constraint might not exist: {sql} - {e}")
             
-            try:
-                # Drop foreign key constraints if they exist
-                print("Dropping foreign key constraints...")
-                
-                # Check if constraints exist and drop them
-                constraints_to_drop = [
-                    "trips_employee_id_fkey",
-                    "trips_driver_id_fkey", 
-                    "trips_vehicle_id_fkey"
-                ]
-                
-                for constraint_name in constraints_to_drop:
-                    try:
-                        connection.execute(text(f"ALTER TABLE trips DROP CONSTRAINT IF EXISTS {constraint_name}"))
-                        print(f"✓ Dropped constraint: {constraint_name}")
-                    except Exception as e:
-                        print(f"Note: Could not drop {constraint_name}: {e}")
-                
-                # Commit the transaction
-                trans.commit()
-                print("✅ Database migration completed successfully!")
-                
-            except Exception as e:
-                trans.rollback()
-                print(f"❌ Migration failed: {e}")
-                return False
-                
+            conn.commit()
+            print("✅ All foreign key constraints removed successfully!")
+            
     except Exception as e:
-        print(f"❌ Database connection failed: {e}")
+        print(f"❌ Error during migration: {e}")
         return False
     
     return True
 
-if __name__ == "__main__":
-    print("Starting database migration...")
-    success = migrate_database()
+def main():
+    """Main migration function"""
+    print("=" * 60)
+    print("🚀 Trip Service Database Migration")
+    print("=" * 60)
+    
+    success = drop_foreign_keys()
+    
     if success:
-        print("Migration completed successfully!")
+        print("\n✅ Migration completed successfully!")
+        print("You can now create trips without foreign key constraint errors.")
     else:
-        print("Migration failed!")
+        print("\n❌ Migration failed!")
         sys.exit(1)
+
+if __name__ == "__main__":
+    main()
