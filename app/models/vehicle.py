@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.base import Base
@@ -12,7 +12,7 @@ class Vehicle(Base):
     plate_number = Column(String, unique=True, nullable=False)
     vehicle_type = Column(String, nullable=False)  
     capacity = Column(Integer, nullable=False)
-    is_available = Column(String, default=True)
+    is_available = Column(Boolean, default=True)
     driver_id = Column(Integer, ForeignKey("drivers.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

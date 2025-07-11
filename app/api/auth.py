@@ -58,7 +58,8 @@ def register_user(db: Session, role: str, user_data: dict) -> Token:
             name=user_data["name"],
             phone_number=user_data["phone_number"],
             dl_number=user_data["dl_number"],
-            vehicle_plate_number=user_data["vehicle_plate_number"]
+            vehicle_plate_number=user_data["vehicle_plate_number"],
+            service_area=user_data.get("service_area")
         )
         db.add(driver)
     elif role == "employee":

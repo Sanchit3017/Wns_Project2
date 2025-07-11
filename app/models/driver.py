@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.base import Base
@@ -17,7 +17,10 @@ class Driver(Base):
     phone_number = Column(String, nullable=False)
     dl_number = Column(String, unique=True, nullable=False)
     vehicle_plate_number = Column(String, nullable=False)
-    is_available = Column(String, default=True)
+    is_available = Column(Boolean, default=True)
+    identity_proof_url = Column(String, nullable=True)  # PDF or image URL for identity verification
+    identity_proof_status = Column(String, default="pending")  # pending, approved, rejected
+    service_area = Column(String, nullable=True)  # Area/location where driver operates
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
