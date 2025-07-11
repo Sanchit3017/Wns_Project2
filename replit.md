@@ -35,6 +35,11 @@ This is a city-based employee travel management system transformed from a monoli
 ✓ **INTER-SERVICE COMMUNICATION**: Admin functions communicate with Auth and Trip services
 ✓ **ROLE-BASED ACCESS CONTROL**: Admin hierarchy properly enforced above drivers and employees
 ✓ **DATABASE DEPENDENCY INJECTION**: Fixed and optimized database connection handling across services
+✓ **SIMPLIFIED TRIP CREATION**: Removed vehicle ID constraints from trip creation API
+  - Trip creation no longer requires vehicle_id parameter
+  - Vehicle assignment handled separately by admin functions
+  - Cleaner API with focus on employee-driver assignment workflow
+  - Removed vehicle assignment endpoints and schemas where unnecessary
 ✓ Maintained all existing functionality while improving scalability and reliability
 
 ## User Preferences

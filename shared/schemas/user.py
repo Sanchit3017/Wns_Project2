@@ -225,8 +225,7 @@ class UserStatusUpdate(BaseModel):
     is_active: bool
 
 
-class VehicleAssignment(BaseModel):
-    driver_id: int
+
 
 
 class SystemStatistics(BaseModel):
