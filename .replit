@@ -23,6 +23,7 @@ args = "Microservices"
 [[workflows.workflow]]
 name = "FastAPI Server"
 author = "agent"
+mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"

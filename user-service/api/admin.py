@@ -48,7 +48,7 @@ async def create_admin(db: Session, user_id: int, admin_data: AdminCreate) -> Ad
 
 
 def get_admin_profile(db: Session, user_id: int) -> AdminResponse:
-    """Get admin profile by user ID"""
+    
     admin = db.query(Admin).filter(Admin.user_id == user_id).first()
     if not admin:
         raise HTTPException(
@@ -59,7 +59,7 @@ def get_admin_profile(db: Session, user_id: int) -> AdminResponse:
 
 
 async def get_all_drivers(db: Session) -> List[dict]:
-    """Admin function: Get all drivers with user details"""
+    
     drivers = db.query(Driver).all()
     driver_list = []
     
@@ -107,7 +107,7 @@ async def get_all_drivers(db: Session) -> List[dict]:
 
 
 async def get_all_employees(db: Session) -> List[dict]:
-    """Admin function: Get all employees with user details"""
+  
     employees = db.query(Employee).all()
     employee_list = []
     
