@@ -76,7 +76,7 @@ def get_driver_profile(db: Session, user_id: int) -> DriverResponse:
 
 
 def update_driver_profile(db: Session, user_id: int, driver_update: DriverUpdate) -> DriverResponse:
-    """Update driver profile"""
+    
     driver = db.query(Driver).filter(Driver.user_id == user_id).first()
     if not driver:
         raise HTTPException(

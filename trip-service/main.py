@@ -5,7 +5,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from shared.config import TripServiceSettings
-from shared.database.base import create_database_engine, create_session_factory, Base
 from models.trip import Trip
 from routers.trip_router import router as trip_router
 import uvicorn
@@ -13,9 +12,9 @@ import uvicorn
 # Initialize settings
 settings = TripServiceSettings()
 
-# Create database engine and session factory
-engine = create_database_engine(settings.DATABASE_URL, echo=settings.DEBUG)
-SessionLocal = create_session_factory(engine)
+# Database setup is handled in database.py
+from database import engine
+from shared.database.base import Base
 
 # Create tables
 Base.metadata.create_all(bind=engine)

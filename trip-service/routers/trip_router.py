@@ -6,14 +6,14 @@ from api.trip import (
     get_trips_by_driver, get_trip_analytics, delete_trip
 )
 from shared.schemas.trip import TripCreate, TripUpdate, TripResponse, TripWithDetails, TripStatistics
-from shared.database.base import get_db_session
+from database import get_database_session
 from typing import List, Optional
 
 router = APIRouter()
 
 def get_db():
     """Get database session"""
-    return next(get_db_session())
+    return next(get_database_session())
 
 def get_user_context(
     x_user_id: Optional[str] = Header(None),
