@@ -7,13 +7,13 @@ from api.driver import (
     upload_identity_proof, create_driver
 )
 from api.employee import (
-    get_employee_profile, update_employee_profile, get_all_employees,
+    get_employee_profile, update_employee_profile,
     get_employee_by_id, create_employee
 )
 from api.admin import (
     create_admin, get_admin_profile, update_admin_profile, get_all_admins,
-    get_admin_by_id, get_system_statistics, manage_user_status,
-    update_driver_verification_status, assign_vehicle_to_driver, unassign_vehicle_from_driver
+    get_all_drivers, get_all_employees, assign_driver_to_employee,
+    get_all_trips, toggle_user_status, get_admin_dashboard
 )
 from shared.schemas.user import (
     DriverResponse, DriverUpdate, DriverWithUser, EmployeeResponse, 
@@ -196,16 +196,15 @@ async def update_employee_profile_endpoint(
     return update_employee_profile(db, user_context["user_id"], employee_update)
 
 
-@router.get("/employees", response_model=List[EmployeeWithUser])
+@router.get("/employees", response_model=List[dict])
 async def list_all_employees(
     user_context: dict = Depends(get_user_context),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
     """Get all employees (admin only)"""
     if user_context["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
-    return await get_all_employees(db, credentials.credentials)
+    return await get_all_employees(db)
 
 
 @router.get("/employees/{employee_id}", response_model=EmployeeResponse)
@@ -272,56 +271,88 @@ async def get_admin_by_id_endpoint(
     return get_admin_by_id(db, admin_id)
 
 
-# ===== ADMIN MANAGEMENT ENDPOINTS =====
+# ===== COMPREHENSIVE ADMIN MANAGEMENT ENDPOINTS =====
 
-@router.get("/admin/statistics", response_model=dict)
-async def get_admin_statistics(
+@router.get("/admin/drivers", response_model=List[dict])
+async def admin_list_all_drivers(
     user_context: dict = Depends(get_user_context),
     db: Session = Depends(get_db)
 ):
-    """Get system statistics (admin only)"""
+    """Admin: Get all drivers with user details"""
     if user_context["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
-    return get_system_statistics(db)
+    return await get_all_drivers(db)
 
 
-@router.put("/admin/users/{user_id}/status")
-async def manage_user_status_endpoint(
+@router.get("/admin/employees", response_model=List[dict])
+async def admin_list_all_employees(
+    user_context: dict = Depends(get_user_context),
+    db: Session = Depends(get_db)
+):
+    """Admin: Get all employees with user details"""
+    if user_context["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return await get_all_employees(db)
+
+
+@router.post("/admin/assign-driver")
+async def admin_assign_driver_to_employee(
+    employee_id: int,
+    driver_id: Optional[int] = None,
+    user_context: dict = Depends(get_user_context),
+    db: Session = Depends(get_db)
+):
+    """Admin: Assign driver to employee based on location or specific driver ID"""
+    if user_context["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return await assign_driver_to_employee(db, employee_id, driver_id)
+
+
+@router.get("/admin/trips")
+async def admin_get_all_trips(
+    user_context: dict = Depends(get_user_context),
+    db: Session = Depends(get_db)
+):
+    """Admin: Get all trips from trip service"""
+    if user_context["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return await get_all_trips(db)
+
+
+@router.put("/admin/users/{user_id}/toggle-status")
+async def admin_toggle_user_status(
     user_id: int,
-    status_update: UserStatusUpdate,
+    user_type: str,
+    new_status: bool,
     user_context: dict = Depends(get_user_context),
     db: Session = Depends(get_db)
 ):
-    """Activate or deactivate user account (admin only)"""
+    """Admin: Toggle status of driver or employee"""
     if user_context["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
-    return await manage_user_status(db, user_id, status_update.is_active)
+    return await toggle_user_status(db, user_id, user_type, new_status)
 
 
-@router.put("/admin/drivers/{driver_id}/verification")
-async def update_driver_verification_endpoint(
-    driver_id: int,
-    verification_update: IdentityVerificationUpdate,
+@router.get("/admin/dashboard")
+async def admin_get_dashboard(
     user_context: dict = Depends(get_user_context),
     db: Session = Depends(get_db)
 ):
-    """Update driver verification status (admin only)"""
+    """Admin: Get comprehensive admin dashboard data"""
     if user_context["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
-    return update_driver_verification_status(db, driver_id, verification_update.identity_proof_status)
+    return await get_admin_dashboard(db)
 
 
-@router.put("/admin/vehicles/{vehicle_id}/assign")
-async def assign_vehicle_endpoint(
-    vehicle_id: int,
-    assignment: VehicleAssignment,
+@router.get("/admin/statistics")
+async def admin_get_statistics(
     user_context: dict = Depends(get_user_context),
     db: Session = Depends(get_db)
 ):
-    """Assign vehicle to driver (admin only)"""
+    """Admin: Get system statistics (alias for dashboard)"""
     if user_context["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
-    return assign_vehicle_to_driver(db, vehicle_id, assignment.driver_id)
+    return await get_admin_dashboard(db)
 
 
 @router.delete("/admin/vehicles/{vehicle_id}/assign")
