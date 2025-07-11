@@ -162,3 +162,75 @@ class RescheduleRequest(BaseModel):
     trip_id: int
     new_scheduled_time: datetime
     reason: str
+
+
+# Admin schemas
+class AdminBase(BaseModel):
+    name: str
+    employee_id: str
+    phone_number: str
+    department: str
+
+
+class AdminCreate(AdminBase):
+    access_level: Optional[str] = "admin"
+
+
+class AdminUpdate(BaseModel):
+    name: Optional[str] = None
+    phone_number: Optional[str] = None
+    department: Optional[str] = None
+    access_level: Optional[str] = None
+
+
+class AdminResponse(AdminBase):
+    id: int
+    user_id: int
+    access_level: str
+    created_at: datetime
+    updated_at: Optional[datetime]
+    
+    class Config:
+        from_attributes = True
+
+
+class AdminRegistration(BaseModel):
+    email: str
+    password: str
+    name: str
+    employee_id: str
+    phone_number: str
+    department: str
+    access_level: Optional[str] = "admin"
+
+
+class AdminWithUser(BaseModel):
+    id: int
+    user_id: int
+    name: str
+    employee_id: str
+    phone_number: str
+    department: str
+    access_level: str
+    email: str
+    is_active: bool
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+# Admin action schemas
+class UserStatusUpdate(BaseModel):
+    is_active: bool
+
+
+class VehicleAssignment(BaseModel):
+    driver_id: int
+
+
+class SystemStatistics(BaseModel):
+    drivers: dict
+    employees: dict
+    vehicles: dict
+    system: dict
