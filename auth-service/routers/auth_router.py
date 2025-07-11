@@ -12,7 +12,7 @@ security = HTTPBearer()
 def get_db():
     """Get database session"""
     # This will be configured in main.py
-    pass
+    yield None
 
 
 @router.post("/login", response_model=Token)

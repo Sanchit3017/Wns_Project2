@@ -45,13 +45,12 @@ def get_db():
     finally:
         db.close()
 
-# Update the router's get_db dependency
-auth_router.dependency_overrides = {
-    "get_db": get_db
-}
-
-# Include routers
+# Include routers (with dependency override)
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+
+# Override the get_db dependency after including the router
+from routers.auth_router import get_db as router_get_db
+app.dependency_overrides[router_get_db] = get_db
 
 @app.get("/")
 async def root():

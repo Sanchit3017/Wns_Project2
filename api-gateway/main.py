@@ -52,7 +52,7 @@ async def get_user_context(credentials: HTTPAuthorizationCredentials = Depends(s
 async def add_user_context_headers(request: Request, call_next):
     """Add user context to headers for downstream services"""
     # Skip auth for health checks and auth endpoints
-    if request.url.path in ["/", "/health"] or request.url.path.startswith("/api/auth"):
+    if request.url.path in ["/", "/health"] or request.url.path.startswith("/auth"):
         response = await call_next(request)
         return response
     
@@ -67,18 +67,25 @@ async def add_user_context_headers(request: Request, call_next):
             request.state.user_id = user_context["user_id"]
             request.state.user_role = user_context["role"]
             request.state.user_email = user_context["email"]
-        except Exception:
+        except Exception as e:
+            print(f"Token validation failed: {e}")
             return JSONResponse(
                 status_code=401,
                 content={"detail": "Invalid authentication token"}
             )
+    else:
+        # No auth header provided for protected routes
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Authentication required"}
+        )
     
     response = await call_next(request)
     return response
 
 
 # Route requests to appropriate services
-@app.api_route("/api/auth/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route("/auth/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_auth_service(request: Request, path: str):
     """Proxy requests to auth service"""
     url = f"{settings.AUTH_SERVICE_URL}/auth/{path}"
@@ -98,24 +105,24 @@ async def proxy_auth_service(request: Request, path: str):
         )
 
 
-@app.api_route("/api/users/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-@app.api_route("/api/drivers/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-@app.api_route("/api/employees/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-@app.api_route("/api/admin/drivers/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-@app.api_route("/api/admin/employees/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route("/users/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route("/drivers/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route("/employees/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route("/admin/drivers/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route("/admin/employees/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_user_service(request: Request, path: str):
     """Proxy requests to user service"""
     # Map routes to user service endpoints
-    if request.url.path.startswith("/api/drivers"):
-        service_path = request.url.path.replace("/api/drivers", "/users/drivers")
-    elif request.url.path.startswith("/api/employees"):
-        service_path = request.url.path.replace("/api/employees", "/users/employees")
-    elif request.url.path.startswith("/api/admin/drivers"):
-        service_path = request.url.path.replace("/api/admin/drivers", "/users/drivers")
-    elif request.url.path.startswith("/api/admin/employees"):
-        service_path = request.url.path.replace("/api/admin/employees", "/users/employees")
+    if request.url.path.startswith("/drivers"):
+        service_path = request.url.path.replace("/drivers", "/users/drivers")
+    elif request.url.path.startswith("/employees"):
+        service_path = request.url.path.replace("/employees", "/users/employees")
+    elif request.url.path.startswith("/admin/drivers"):
+        service_path = request.url.path.replace("/admin/drivers", "/users/drivers")
+    elif request.url.path.startswith("/admin/employees"):
+        service_path = request.url.path.replace("/admin/employees", "/users/employees")
     else:
-        service_path = request.url.path.replace("/api/users", "/users")
+        service_path = request.url.path.replace("/users", "/users")
     
     url = f"{settings.USER_SERVICE_URL}{service_path}"
     
@@ -124,7 +131,8 @@ async def proxy_user_service(request: Request, path: str):
     if hasattr(request.state, 'user_id'):
         headers.update({
             "X-User-ID": str(request.state.user_id),
-            "X-User-Role": request.state.user_role
+            "X-User-Role": request.state.user_role,
+            "X-User-Email": request.state.user_email
         })
     
     async with httpx.AsyncClient() as client:
@@ -142,17 +150,18 @@ async def proxy_user_service(request: Request, path: str):
         )
 
 
-@app.api_route("/api/trips/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route("/trips/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_trip_service(request: Request, path: str):
     """Proxy requests to trip service"""
-    url = f"{settings.TRIP_SERVICE_URL}/trips/{path}"
+    url = f"{settings.TRIP_SERVICE_URL}/api/trips/{path}"
     
     # Add user context headers
     headers = dict(request.headers)
     if hasattr(request.state, 'user_id'):
         headers.update({
             "X-User-ID": str(request.state.user_id),
-            "X-User-Role": request.state.user_role
+            "X-User-Role": request.state.user_role,
+            "X-User-Email": request.state.user_email
         })
     
     async with httpx.AsyncClient() as client:
@@ -170,17 +179,18 @@ async def proxy_trip_service(request: Request, path: str):
         )
 
 
-@app.api_route("/api/notifications/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route("/notifications/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_notification_service(request: Request, path: str):
     """Proxy requests to notification service"""
-    url = f"{settings.NOTIFICATION_SERVICE_URL}/notifications/{path}"
+    url = f"{settings.NOTIFICATION_SERVICE_URL}/api/notifications/{path}"
     
     # Add user context headers
     headers = dict(request.headers)
     if hasattr(request.state, 'user_id'):
         headers.update({
             "X-User-ID": str(request.state.user_id),
-            "X-User-Role": request.state.user_role
+            "X-User-Role": request.state.user_role,
+            "X-User-Email": request.state.user_email
         })
     
     async with httpx.AsyncClient() as client:
