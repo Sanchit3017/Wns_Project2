@@ -10,10 +10,17 @@ from api.employee import (
     get_employee_profile, update_employee_profile, get_all_employees,
     get_employee_by_id, create_employee
 )
+from api.admin import (
+    create_admin, get_admin_profile, update_admin_profile, get_all_admins,
+    get_admin_by_id, get_system_statistics, manage_user_status,
+    update_driver_verification_status, assign_vehicle_to_driver, unassign_vehicle_from_driver
+)
 from shared.schemas.user import (
     DriverResponse, DriverUpdate, DriverWithUser, EmployeeResponse, 
     EmployeeUpdate, EmployeeWithUser, LocationBasedDriverSearch,
-    IdentityVerificationUpdate, DriverCreate, EmployeeCreate
+    IdentityVerificationUpdate, DriverCreate, EmployeeCreate,
+    AdminResponse, AdminUpdate, AdminWithUser, AdminCreate,
+    UserStatusUpdate, VehicleAssignment, SystemStatistics
 )
 from typing import List, Optional
 import os
@@ -22,9 +29,14 @@ router = APIRouter()
 security = HTTPBearer()
 
 
-def get_db():
-    """Database dependency - configured in main.py"""
-    pass
+# Import database dependency from database module
+import sys
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
+
+from database import get_database_session as get_db
 
 
 def get_user_context(x_user_id: Optional[str] = Header(None), 
@@ -204,3 +216,121 @@ async def get_employee_by_id_endpoint(
 ):
     """Get employee by ID (internal use)"""
     return get_employee_by_id(db, employee_id)
+
+
+# ===== ADMIN ENDPOINTS =====
+
+@router.post("/admins", response_model=AdminResponse)
+async def create_admin_profile(
+    admin_data: AdminCreate,
+    user_context: dict = Depends(get_user_context),
+    db: Session = Depends(get_db)
+):
+    """Create admin profile"""
+    return await create_admin(db, user_context["user_id"], admin_data)
+
+
+@router.get("/admins/profile", response_model=AdminResponse)
+async def get_admin_profile_endpoint(
+    user_context: dict = Depends(get_user_context),
+    db: Session = Depends(get_db)
+):
+    """Get admin profile"""
+    return get_admin_profile(db, user_context["user_id"])
+
+
+@router.put("/admins/profile", response_model=AdminResponse)
+async def update_admin_profile_endpoint(
+    admin_update: AdminUpdate,
+    user_context: dict = Depends(get_user_context),
+    db: Session = Depends(get_db)
+):
+    """Update admin profile"""
+    return update_admin_profile(db, user_context["user_id"], admin_update)
+
+
+@router.get("/admins", response_model=List[AdminWithUser])
+async def list_all_admins(
+    user_context: dict = Depends(get_user_context),
+    db: Session = Depends(get_db)
+):
+    """Get all admins (super admin only)"""
+    if user_context["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return await get_all_admins(db)
+
+
+@router.get("/admins/{admin_id}", response_model=AdminResponse)
+async def get_admin_by_id_endpoint(
+    admin_id: int,
+    user_context: dict = Depends(get_user_context),
+    db: Session = Depends(get_db)
+):
+    """Get admin by ID (admin only)"""
+    if user_context["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return get_admin_by_id(db, admin_id)
+
+
+# ===== ADMIN MANAGEMENT ENDPOINTS =====
+
+@router.get("/admin/statistics", response_model=dict)
+async def get_admin_statistics(
+    user_context: dict = Depends(get_user_context),
+    db: Session = Depends(get_db)
+):
+    """Get system statistics (admin only)"""
+    if user_context["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return get_system_statistics(db)
+
+
+@router.put("/admin/users/{user_id}/status")
+async def manage_user_status_endpoint(
+    user_id: int,
+    status_update: UserStatusUpdate,
+    user_context: dict = Depends(get_user_context),
+    db: Session = Depends(get_db)
+):
+    """Activate or deactivate user account (admin only)"""
+    if user_context["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return await manage_user_status(db, user_id, status_update.is_active)
+
+
+@router.put("/admin/drivers/{driver_id}/verification")
+async def update_driver_verification_endpoint(
+    driver_id: int,
+    verification_update: IdentityVerificationUpdate,
+    user_context: dict = Depends(get_user_context),
+    db: Session = Depends(get_db)
+):
+    """Update driver verification status (admin only)"""
+    if user_context["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return update_driver_verification_status(db, driver_id, verification_update.identity_proof_status)
+
+
+@router.put("/admin/vehicles/{vehicle_id}/assign")
+async def assign_vehicle_endpoint(
+    vehicle_id: int,
+    assignment: VehicleAssignment,
+    user_context: dict = Depends(get_user_context),
+    db: Session = Depends(get_db)
+):
+    """Assign vehicle to driver (admin only)"""
+    if user_context["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return assign_vehicle_to_driver(db, vehicle_id, assignment.driver_id)
+
+
+@router.delete("/admin/vehicles/{vehicle_id}/assign")
+async def unassign_vehicle_endpoint(
+    vehicle_id: int,
+    user_context: dict = Depends(get_user_context),
+    db: Session = Depends(get_db)
+):
+    """Remove vehicle assignment (admin only)"""
+    if user_context["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return unassign_vehicle_from_driver(db, vehicle_id)
