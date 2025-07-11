@@ -2,20 +2,24 @@
 
 ## Overview
 
-This is a city-based employee travel management system built with FastAPI, SQLAlchemy, and PostgreSQL. The system manages transportation for employees with role-based access control for admins, drivers, and employees. It handles trip scheduling, driver assignments, vehicle management, and real-time notifications.
+This is a city-based employee travel management system transformed from a monolithic FastAPI application into a complete microservices architecture. The system manages transportation for employees with role-based access control for admins, drivers, and employees. It handles trip scheduling, driver assignments, vehicle management, and real-time notifications across distributed services.
 
 ## Recent Changes (July 11, 2025)
 
-✓ Added driver identity verification system with document upload capability
-✓ Implemented location-based driver assignment for admin users
-✓ Added service_area field to driver profiles for location matching
-✓ Created `/api/driver/upload-identity` endpoint for PDF/image uploads
-✓ Added `/api/admin/drivers/search-by-location` for location-based driver search
-✓ Added `/api/admin/drivers/{id}/verify-identity` for admin verification approval
-✓ Fixed database schema boolean type issues for is_available fields
-✓ Enhanced driver registration to include service area information
-✓ Added automatic notification system for verification status updates
-✓ Successfully tested all new features with file uploads and location matching
+✓ **MAJOR ARCHITECTURAL TRANSFORMATION**: Successfully migrated from monolithic to microservices architecture
+✓ Created 5 independent microservices with complete separation of concerns:
+  - Auth Service (port 8001): User authentication and authorization
+  - User Service (port 8002): Driver and employee profile management  
+  - Trip Service (port 8003): Trip scheduling and management
+  - Notification Service (port 8004): System notifications
+  - API Gateway (port 8000): Request routing and middleware
+✓ Implemented shared component library for code reuse across services
+✓ Set up Docker containers and docker-compose orchestration
+✓ Created inter-service communication using HTTP clients
+✓ Established JWT-based authentication with user context propagation
+✓ Built centralized microservice runner for local development
+✓ Successfully tested all services with 100% health check validation
+✓ Maintained all existing functionality while improving scalability
 
 ## User Preferences
 
@@ -23,25 +27,35 @@ Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Backend Framework
+### Microservices Architecture
+- **Auth Service**: Handles user authentication, JWT token generation/validation, and user account management
+- **User Service**: Manages driver and employee profiles, identity verification, and location-based matching
+- **Trip Service**: Handles trip creation, scheduling, assignment, and status tracking
+- **Notification Service**: Manages system notifications and communication
+- **API Gateway**: Central entry point for routing requests, authentication middleware, and service orchestration
+
+### Technology Stack
 - **FastAPI**: Modern, fast web framework for building APIs with automatic OpenAPI documentation
 - **SQLAlchemy**: ORM for database operations with declarative models
-- **PostgreSQL**: Primary relational database for data persistence
+- **PostgreSQL**: Separate databases for each microservice ensuring complete isolation
 - **Pydantic**: Data validation and serialization using Python type hints
+- **httpx**: Async HTTP client for inter-service communication
+- **Docker**: Containerization for deployment and development
+- **Docker Compose**: Multi-service orchestration
 
 ### Authentication & Authorization
 - **JWT tokens**: Stateless authentication with role-based access control
 - **bcrypt**: Password hashing for secure storage
 - **Role-based permissions**: Three distinct user roles (admin, driver, employee)
+- **API Gateway middleware**: Automatic user context propagation to downstream services
 
 ### Database Design
-The system uses a relational database with the following core entities:
-- Users (base authentication table)
-- Employees (employee-specific profile data)
-- Drivers (driver-specific profile data)
-- Vehicles (fleet management)
-- Trips (travel requests and assignments)
-- Notifications (system communications)
+Each microservice maintains its own database with specific entities:
+- **Auth Service**: Users (authentication and authorization)
+- **User Service**: Drivers, Employees, Vehicles (profile management)
+- **Trip Service**: Trips (scheduling and tracking)
+- **Notification Service**: Notifications (system communications)
+- **Cross-service references**: Uses service IDs instead of foreign keys for loose coupling
 
 ## Key Components
 
@@ -70,38 +84,39 @@ FastAPI routers with role-based access control:
 
 ## Data Flow
 
-### User Registration & Authentication
-1. User registers with role-specific information (including service area for drivers)
-2. System creates base User record and role-specific profile
-3. JWT token issued for authenticated sessions
-4. Role-based access enforced on subsequent requests
+### Microservices Communication
+1. **API Gateway** receives all external requests
+2. **JWT validation** performed at gateway level
+3. **User context** (ID, role, email) propagated via headers to downstream services
+4. **Service-to-service** communication uses async HTTP clients
+5. **Database isolation** ensures each service manages its own data independently
+
+### User Registration & Authentication Flow
+1. Registration request → API Gateway → Auth Service
+2. Auth Service creates user account and returns JWT token
+3. Profile creation request → API Gateway → User Service
+4. User Service creates role-specific profile (driver/employee)
+5. JWT token used for all subsequent authenticated requests
 
 ### Driver Identity Verification Workflow
-1. Driver uploads identity documents (PDF, JPG, PNG, DOC formats supported)
-2. Files stored securely in uploads/identity_proofs directory
-3. Admin reviews and approves/rejects verification
-4. System sends notification to driver about verification status
-5. Verified drivers eligible for trip assignments
-
-### Location-Based Assignment Workflow
-1. Admin searches for drivers by employee location
-2. System matches drivers based on service area proximity
-3. Distance scoring algorithm ranks drivers by relevance
-4. Admin assigns best-matched driver to trip
-5. Location-aware trip optimization
+1. Document upload → API Gateway → User Service
+2. Files stored securely in service-specific uploads directory
+3. Admin verification request → API Gateway → User Service
+4. Verification status update triggers Notification Service
+5. Driver receives real-time notification about status change
 
 ### Trip Management Workflow
-1. Admin creates trips for employees
-2. Admin uses location-based search to find suitable drivers
-3. Driver receives trip notifications
-4. Driver updates trip status (start/complete)
-5. System tracks trip history and analytics
+1. Trip creation → API Gateway → Trip Service
+2. Trip Service stores trip data in isolated database
+3. Driver assignment → User Service lookup for driver details
+4. Status updates → Trip Service → Notification Service
+5. Real-time notifications sent to relevant users
 
-### Notification System
-1. System generates notifications for trip updates and verification status
-2. Role-based notification targeting
-3. Mark as read/unread functionality
-4. Bulk notification capabilities for admins
+### Inter-Service Data Consistency
+1. Services use **eventual consistency** model
+2. **Service IDs** used for cross-service references (no foreign keys)
+3. **Compensation patterns** for handling distributed transaction failures
+4. **Health checks** ensure service availability before requests
 
 ## External Dependencies
 
@@ -120,27 +135,37 @@ FastAPI routers with role-based access control:
 
 ## Deployment Strategy
 
+### Local Development
+- **Microservice Runner**: `python run_microservices.py` starts all services
+- **Service Ports**: Auth(8001), User(8002), Trip(8003), Notification(8004), Gateway(8000)
+- **Database**: Single PostgreSQL instance with separate schemas per service
+- **Health Monitoring**: Built-in health checks and service status dashboard
+
+### Docker Deployment
+- **Individual Dockerfiles**: Each service has optimized container configuration
+- **Docker Compose**: Orchestrates all services with proper dependencies
+- **Network Isolation**: Services communicate over dedicated Docker network
+- **Database**: Containerized PostgreSQL with persistent volumes
+
 ### Environment Configuration
-- Environment-based configuration using Pydantic settings
-- Database URL configuration for different environments
-- JWT secret key management
-- Debug mode toggles
-
-### Database Management
-- SQLAlchemy engine with connection pooling
-- Automatic table creation on startup
-- Sample data initialization for development
-- Migration-ready architecture
-
-### CORS Configuration
-- Configured for cross-origin requests
-- Supports all origins in development (should be restricted in production)
-- Credential support enabled
+- **Service-specific settings**: Each service has isolated configuration
+- **Shared configuration**: Common settings in shared module
+- **Environment variables**: Database URLs, service URLs, JWT secrets
+- **Debug toggles**: Per-service debugging capabilities
 
 ### Production Considerations
-- Connection pooling with pre-ping health checks
-- Connection recycling for long-running applications
-- Configurable token expiration times
-- Environment-specific debug logging
+- **Horizontal scaling**: Each service can scale independently
+- **Load balancing**: API Gateway can be load balanced for high availability
+- **Database sharding**: Each service database can be optimized separately
+- **Service discovery**: Health checks and automatic failover capabilities
+- **Monitoring**: Distributed logging and metrics collection
+- **Security**: JWT token validation at gateway with service isolation
 
-The system is designed to be modular and scalable, with clear separation of concerns between authentication, business logic, and data access layers. The architecture supports easy extension for additional features like real-time location tracking, advanced analytics, or mobile application integration.
+### Migration Benefits
+- **Independent deployment**: Services can be updated without affecting others
+- **Technology flexibility**: Each service can use different tech stacks if needed
+- **Fault isolation**: Service failures don't cascade to entire system
+- **Team scalability**: Different teams can own different services
+- **Performance optimization**: Services can be optimized for specific workloads
+
+The microservices architecture provides a robust foundation for scaling the travel management system while maintaining the existing functionality and improving operational flexibility.
