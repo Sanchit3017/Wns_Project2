@@ -1,0 +1,3 @@
+name: API Gateway
+command: cd api-gateway && python main.py
+port: 8000

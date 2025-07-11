@@ -1,0 +1,3 @@
+name: Notification Service
+command: cd notification-service && python main.py
+port: 8004
