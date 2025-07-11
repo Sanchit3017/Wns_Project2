@@ -11,7 +11,7 @@ from api.employee import (
     get_employee_by_id, create_employee
 )
 from api.admin import (
-    create_admin, get_admin_profile, update_admin_profile, get_all_admins,
+    create_admin, get_admin_profile, update_admin_profile,
     get_all_drivers, get_all_employees, assign_driver_to_employee,
     get_all_trips, toggle_user_status, get_admin_dashboard
 )
@@ -248,27 +248,7 @@ async def update_admin_profile_endpoint(
     return update_admin_profile(db, user_context["user_id"], admin_update)
 
 
-@router.get("/admins", response_model=List[AdminWithUser])
-async def list_all_admins(
-    user_context: dict = Depends(get_user_context),
-    db: Session = Depends(get_db)
-):
-    """Get all admins (super admin only)"""
-    if user_context["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-    return await get_all_admins(db)
 
-
-@router.get("/admins/{admin_id}", response_model=AdminResponse)
-async def get_admin_by_id_endpoint(
-    admin_id: int,
-    user_context: dict = Depends(get_user_context),
-    db: Session = Depends(get_db)
-):
-    """Get admin by ID (admin only)"""
-    if user_context["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-    return get_admin_by_id(db, admin_id)
 
 
 # ===== COMPREHENSIVE ADMIN MANAGEMENT ENDPOINTS =====
