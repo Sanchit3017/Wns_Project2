@@ -374,51 +374,6 @@ async def get_admin_dashboard(db: Session) -> dict:
     }
 
 
-# Legacy admin functions for compatibility
-async def get_all_admins(db: Session) -> List[AdminWithUser]:
-    """Get all admin profiles with user details"""
-    admins = db.query(Admin).all()
-    admin_list = []
-    
-    async with httpx.AsyncClient() as client:
-        for admin in admins:
-            try:
-                response = await client.get(
-                    f"{settings.AUTH_SERVICE_URL}/auth/user/{admin.user_id}",
-                    timeout=5.0
-                )
-                if response.status_code == 200:
-                    user_data = response.json()
-                    admin_with_user = AdminWithUser(
-                        id=admin.id,
-                        user_id=admin.user_id,
-                        name=admin.name,
-                        employee_id=admin.employee_id,
-                        phone_number=admin.phone_number,
-                        department=admin.department,
-                        access_level=admin.access_level,
-                        email=user_data.get("email", "unknown"),
-                        is_active=user_data.get("is_active", True),
-                        created_at=admin.created_at
-                    )
-                    admin_list.append(admin_with_user)
-            except Exception:
-                admin_with_user = AdminWithUser(
-                    id=admin.id,
-                    user_id=admin.user_id,
-                    name=admin.name,
-                    employee_id=admin.employee_id,
-                    phone_number=admin.phone_number,
-                    department=admin.department,
-                    access_level=admin.access_level,
-                    email="unavailable",
-                    is_active=True,
-                    created_at=admin.created_at
-                )
-                admin_list.append(admin_with_user)
-    return admin_list
-
-
 def update_admin_profile(db: Session, user_id: int, admin_update: AdminUpdate) -> AdminResponse:
     """Update admin profile"""
     admin = db.query(Admin).filter(Admin.user_id == user_id).first()
@@ -434,17 +389,6 @@ def update_admin_profile(db: Session, user_id: int, admin_update: AdminUpdate) -
     
     db.commit()
     db.refresh(admin)
-    return AdminResponse.from_orm(admin)
-
-
-def get_admin_by_id(db: Session, admin_id: int) -> AdminResponse:
-    """Get admin by ID"""
-    admin = db.query(Admin).filter(Admin.id == admin_id).first()
-    if not admin:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Admin not found"
-        )
     return AdminResponse.from_orm(admin)
 
 
