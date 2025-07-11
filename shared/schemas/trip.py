@@ -12,6 +12,7 @@ class TripBase(BaseModel):
 class TripCreate(TripBase):
     employee_id: int
     driver_id: Optional[int] = None
+    vehicle_id: Optional[int] = None
     notes: Optional[str] = None
 
 
