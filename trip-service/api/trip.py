@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from trip_service.models.trip import Trip
+from models.trip import Trip
 from shared.schemas.trip import TripCreate, TripUpdate, TripResponse, TripWithDetails, TripStatistics
 from shared.utils.http_client import ServiceClient
 from shared.config import TripServiceSettings

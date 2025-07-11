@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
+  
   postgres:
     image: postgres:16
     environment:
@@ -15,7 +15,7 @@ services:
     networks:
       - travel_network
 
-  # Auth Service
+  
   auth-service:
     build:
       context: .
@@ -30,7 +30,7 @@ services:
     networks:
       - travel_network
 
-  # User Service
+ 
   user-service:
     build:
       context: .
@@ -47,7 +47,7 @@ services:
     networks:
       - travel_network
 
-  # Trip Service
+  
   trip-service:
     build:
       context: .
@@ -66,7 +66,7 @@ services:
     networks:
       - travel_network
 
-  # Notification Service
+  
   notification-service:
     build:
       context: .
@@ -83,7 +83,7 @@ services:
     networks:
       - travel_network
 
-  # API Gateway
+  
   api-gateway:
     build:
       context: .

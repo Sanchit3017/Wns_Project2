@@ -74,14 +74,13 @@ def get_current_user_role(token: str) -> str:
 def validate_token_middleware(token: str) -> dict:
     """Middleware for validating JWT tokens in API Gateway"""
     try:
-        payload = verify_token(token)
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return {
-            "user_id": payload.get("sub"),
+            "user_id": int(payload.get("sub")),
             "role": payload.get("role"),
             "email": payload.get("email")
         }
-    except HTTPException:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication token"
-        )
+    except JWTError as e:
+        raise Exception(f"Token validation failed: {e}")
+    except Exception as e:
+        raise Exception(f"Token validation failed: {e}")

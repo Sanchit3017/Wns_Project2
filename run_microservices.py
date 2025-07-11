@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-Microservices runner for local development
-Runs all services with proper Python path configuration
-"""
-
 import os
 import sys
 import subprocess
@@ -32,7 +27,7 @@ def run_service(service_name, service_dir, port):
             universal_newlines=True
         )
         
-        # Log output
+        
         for line in iter(process.stdout.readline, ''):
             if line.strip():
                 print(f"[{service_name}] {line.strip()}")
@@ -65,7 +60,7 @@ def main():
             )
             thread.start()
             threads.append(thread)
-            time.sleep(2)  # Stagger startup
+            time.sleep(2) 
         else:
             print(f"Warning: {service_dir} directory not found")
     
@@ -80,7 +75,7 @@ def main():
     print("=" * 50)
     
     try:
-        # Keep main thread alive
+        
         while True:
             time.sleep(1)
     except KeyboardInterrupt:

@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from shared.config import TripServiceSettings
 from shared.database.base import create_database_engine, create_session_factory, Base
 from models.trip import Trip
+from routers.trip_router import router as trip_router
 import uvicorn
 
 # Initialize settings
@@ -34,6 +35,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(trip_router, prefix="/api", tags=["trips"])
 
 @app.get("/")
 async def root():
