@@ -6,14 +6,28 @@ from api.notification import (
     get_unread_count
 )
 from shared.schemas.notification import NotificationCreate, NotificationResponse, BulkNotification
-from shared.database.base import get_db_session
 from typing import List, Optional
 
 router = APIRouter()
 
 def get_db():
     """Get database session"""
-    return next(get_db_session())
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+    from shared.config import NotificationServiceSettings
+    from shared.database.base import create_database_engine, create_session_factory
+
+    settings = NotificationServiceSettings()
+    engine = create_database_engine(settings.DATABASE_URL, echo=settings.DEBUG)
+    SessionLocal = create_session_factory(engine)
+
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 def get_user_context(
     x_user_id: Optional[str] = Header(None),
