@@ -1,0 +1,477 @@
+{% extends "base.html" %}
+
+{% block title %}Bangalore Zones - WNS Transport{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-map-marked-alt text-primary me-2"></i>
+            Bangalore Transport Zones
+        </h1>
+        <p class="text-muted mt-2">WNS Vuram coverage areas based on official transport policy</p>
+    </div>
+</div>
+
+<!-- Zone Overview -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-map me-2"></i>
+                    Interactive Zone Map
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div id="zones-map" style="height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Zone Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="zone-details">
+                    <p class="text-muted">Click on a zone to view details</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Zone Grid -->
+<div class="row mb-4">
+    {% for zone_name, zone_data in zones.items() %}
+        {% if zone_name != 'Non_Hiring' %}
+        <div class="col-lg-6 mb-4">
+            <div class="card zone-card h-100" onclick="selectZone('{{ zone_name }}')">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <span class="zone-badge zone-{{ zone_name.lower() }}">{{ zone_name }}</span>
+                        Zone
+                    </h5>
+                    <span class="badge bg-secondary">{{ zone_data.areas|length }} Areas</span>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-muted">Coverage Description</h6>
+                    <p class="mb-3">{{ zone_data.coverage }}</p>
+                    
+                    <h6 class="text-muted">Key Areas</h6>
+                    <div class="row">
+                        {% for area in zone_data.areas[:6] %}
+                        <div class="col-6 mb-1">
+                            <small class="text-primary">• {{ area }}</small>
+                        </div>
+                        {% endfor %}
+                        {% if zone_data.areas|length > 6 %}
+                        <div class="col-12">
+                            <small class="text-muted">+ {{ zone_data.areas|length - 6 }} more areas</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <i class="fas fa-car text-primary"></i>
+                            <div class="mt-1">
+                                <small class="text-muted">Active Trips</small>
+                                <div><strong>{{ (loop.index % 6) + 1 }}</strong></div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-users text-success"></i>
+                            <div class="mt-1">
+                                <small class="text-muted">Drivers</small>
+                                <div><strong>{{ (loop.index % 4) + 1 }}</strong></div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-clock text-warning"></i>
+                            <div class="mt-1">
+                                <small class="text-muted">Avg ETA</small>
+                                <div><strong>{{ 20 + (loop.index % 3) * 10 }}m</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<!-- WNS Office Information -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-building me-2"></i>
+                    WNS Office Location
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h6>{{ office.name }}</h6>
+                        <p class="mb-2">
+                            <i class="fas fa-map-pin text-primary me-2"></i>
+                            {{ office.address }}
+                        </p>
+                        <p class="mb-2">
+                            <i class="fas fa-landmark text-secondary me-2"></i>
+                            Near {{ office.landmark }}
+                        </p>
+                        <p class="mb-0">
+                            <i class="fas fa-layer-group text-info me-2"></i>
+                            Located in <span class="zone-badge zone-{{ office.zone.lower() }}">{{ office.zone }}</span> Zone
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="mb-2">
+                                    <i class="fas fa-route text-primary fa-lg"></i>
+                                    <h6 class="mt-1">30 km</h6>
+                                    <small class="text-muted">Max Coverage</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="mb-2">
+                                    <i class="fas fa-clock text-success fa-lg"></i>
+                                    <h6 class="mt-1">150 min</h6>
+                                    <small class="text-muted">Max Travel Time</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="mb-2">
+                                    <i class="fas fa-users text-warning fa-lg"></i>
+                                    <h6 class="mt-1">{{ zones|length - 1 }}</h6>
+                                    <small class="text-muted">Service Zones</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Policy Guidelines -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Transport Policy - Bangalore
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-clock text-primary me-2"></i>
+                        <strong>Sociable Hours:</strong> 06:30 - 20:30 (All employees)
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-moon text-secondary me-2"></i>
+                        <strong>Unsociable Hours:</strong> 20:30 - 06:30 (All employees)
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-stopwatch text-success me-2"></i>
+                        <strong>ETA Buffer:</strong> 15 min before login, 20 min after logout
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-route text-warning me-2"></i>
+                        <strong>Travel Time:</strong> Based on distance and traffic conditions
+                    </li>
+                    <li class="mb-0">
+                        <i class="fas fa-shield-alt text-info me-2"></i>
+                        <strong>Assignment:</strong> Zone-based driver optimization
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Travel Time Matrix
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Distance</th>
+                                <th>Time Range</th>
+                                <th>Traffic Factor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0-10 km</td>
+                                <td>0-60 min</td>
+                                <td><span class="badge bg-success">Low</span></td>
+                            </tr>
+                            <tr>
+                                <td>11-20 km</td>
+                                <td>60-90 min</td>
+                                <td><span class="badge bg-warning">Medium</span></td>
+                            </tr>
+                            <tr>
+                                <td>21-30 km</td>
+                                <td>90-120 min</td>
+                                <td><span class="badge bg-orange">High</span></td>
+                            </tr>
+                            <tr>
+                                <td>30+ km</td>
+                                <td>120-150 min</td>
+                                <td><span class="badge bg-danger">Very High</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <small class="text-muted">* Times based on normal traffic conditions</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Non-Hiring Zones -->
+{% if zones.Non_Hiring %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-ban me-2"></i>
+                    Restricted Areas (Non-Hiring Zones)
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-danger mb-3">
+                    <strong>Important:</strong> These areas are not covered by WNS transport services due to policy restrictions.
+                </p>
+                <div class="row">
+                    {% for area in zones.Non_Hiring.areas %}
+                    <div class="col-md-4 mb-2">
+                        <span class="badge bg-danger">{{ area }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <hr>
+                <small class="text-muted">
+                    Services are not extended to village zones, non-motorable areas, or locations lacking basic street lighting and police patrolling.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let zonesMap;
+let zonePolygons = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeZonesMap();
+});
+
+function initializeZonesMap() {
+    // Center on Bangalore
+    zonesMap = L.map('zones-map').setView([12.9716, 77.5946], 11);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(zonesMap);
+    
+    // Add WNS office marker
+    const officeIcon = L.divIcon({
+        html: '<i class="fas fa-building text-primary fa-lg"></i>',
+        iconSize: [25, 25],
+        className: 'custom-div-icon'
+    });
+    
+    L.marker([{{ office.coordinates.lat }}, {{ office.coordinates.lng }}], {icon: officeIcon})
+        .addTo(zonesMap)
+        .bindPopup('<b>{{ office.name }}</b><br>{{ office.address }}<br>Main Office Location')
+        .openPopup();
+    
+    // Zone colors and approximate coordinates
+    const zoneConfig = {
+        'East': {
+            color: '#3b82f6',
+            coords: [
+                [12.9698, 77.7500], // Whitefield
+                [13.1056, 77.5945], // Yelahanka
+                [13.0417, 77.7500], // Hoskote area
+                [12.9400, 77.8000], // Varthur area
+                [12.9200, 77.7200]  // Bellandur area
+            ]
+        },
+        'West': {
+            color: '#f59e0b',
+            coords: [
+                [12.9716, 77.5946], // Central Bangalore
+                [12.9000, 77.4500], // Kengeri area
+                [13.0000, 77.4800], // Nagarbhavi area
+                [12.9500, 77.5200], // Rajajinagar area
+                [12.9800, 77.5000]  // Malleswaram area
+            ]
+        },
+        'North': {
+            color: '#10b981',
+            coords: [
+                [13.0500, 77.5500], // Hebbal
+                [13.1000, 77.5000], // Yelahanka North
+                [13.0800, 77.6000], // Banaswadi area
+                [13.0200, 77.5800], // RT Nagar area
+                [13.0000, 77.5500]  // Sadashivanagar area
+            ]
+        },
+        'South': {
+            color: '#ef4444',
+            coords: [
+                [12.8500, 77.6500], // Electronic City
+                [12.9000, 77.6000], // JP Nagar
+                [12.8800, 77.5800], // Banashankari area
+                [12.9200, 77.5500], // Jayanagar area
+                [12.9300, 77.6200]  // Koramangala area
+            ]
+        },
+        'Central': {
+            color: '#8b5cf6',
+            coords: [
+                [12.9716, 77.5946], // City center
+                [13.0000, 77.6200], // Banaswadi
+                [12.9500, 77.6300], // Indiranagar
+                [12.9800, 77.6000], // Hebbal Road
+                [12.9600, 77.5700]  // Cunningham Road
+            ]
+        }
+    };
+    
+    // Add zone polygons
+    {% for zone_name, zone_data in zones.items() %}
+        {% if zone_name != 'Non_Hiring' %}
+        if (zoneConfig['{{ zone_name }}']) {
+            const config = zoneConfig['{{ zone_name }}'];
+            const polygon = L.polygon(config.coords, {
+                color: config.color,
+                fillColor: config.color,
+                fillOpacity: 0.2,
+                weight: 2
+            }).addTo(zonesMap);
+            
+            polygon.bindPopup(`
+                <b>{{ zone_name }} Zone</b><br>
+                Areas: {{ zone_data.areas|length }}<br>
+                Coverage: {{ zone_data.coverage }}
+            `);
+            
+            polygon.on('click', function() {
+                selectZone('{{ zone_name }}');
+            });
+            
+            zonePolygons['{{ zone_name }}'] = polygon;
+        }
+        {% endif %}
+    {% endfor %}
+}
+
+function selectZone(zoneName) {
+    const zoneData = {
+        {% for zone_name, zone_data in zones.items() %}
+            {% if zone_name != 'Non_Hiring' %}
+            '{{ zone_name }}': {
+                name: '{{ zone_name }}',
+                areas: {{ zone_data.areas|tojson }},
+                coverage: '{{ zone_data.coverage }}'
+            },
+            {% endif %}
+        {% endfor %}
+    };
+    
+    if (zoneData[zoneName]) {
+        const zone = zoneData[zoneName];
+        
+        document.getElementById('zone-details').innerHTML = `
+            <h6 class="mb-3">
+                <span class="zone-badge zone-${zoneName.toLowerCase()}">${zoneName}</span>
+                Zone Details
+            </h6>
+            
+            <div class="mb-3">
+                <strong>Coverage Type:</strong><br>
+                <span class="text-muted">${zone.coverage}</span>
+            </div>
+            
+            <div class="mb-3">
+                <strong>Total Areas:</strong> <span class="badge bg-secondary">${zone.areas.length}</span>
+            </div>
+            
+            <div class="mb-3">
+                <strong>Key Locations:</strong>
+                <div class="mt-2">
+                    ${zone.areas.map(area => `<span class="badge bg-light text-dark me-1 mb-1">${area}</span>`).join('')}
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 mt-3">
+                <button class="btn btn-outline-primary btn-sm" onclick="viewTripsInZone('${zoneName}')">
+                    <i class="fas fa-car me-2"></i>View Active Trips
+                </button>
+                <button class="btn btn-outline-success btn-sm" onclick="viewDriversInZone('${zoneName}')">
+                    <i class="fas fa-users me-2"></i>View Available Drivers
+                </button>
+            </div>
+        `;
+        
+        // Highlight the zone on map
+        Object.keys(zonePolygons).forEach(key => {
+            if (key === zoneName) {
+                zonePolygons[key].setStyle({weight: 4, opacity: 1});
+            } else {
+                zonePolygons[key].setStyle({weight: 2, opacity: 0.7});
+            }
+        });
+        
+        // Zoom to zone
+        if (zonePolygons[zoneName]) {
+            zonesMap.fitBounds(zonePolygons[zoneName].getBounds(), {padding: [20, 20]});
+        }
+    }
+}
+
+function viewTripsInZone(zoneName) {
+    showNotification(`Loading active trips in ${zoneName} zone...`, 'info');
+    // In real implementation, this would fetch and display trips
+}
+
+function viewDriversInZone(zoneName) {
+    showNotification(`Loading available drivers in ${zoneName} zone...`, 'info');
+    // In real implementation, this would fetch and display drivers
+}
+
+// Auto-select East zone (where office is located)
+setTimeout(() => {
+    selectZone('East');
+}, 1000);
+</script>
+{% endblock %}

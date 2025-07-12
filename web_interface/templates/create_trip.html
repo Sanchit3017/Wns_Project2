@@ -1,0 +1,587 @@
+{% extends "base.html" %}
+
+{% block title %}Create Trip - WNS Bangalore Transport{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-plus-circle text-primary me-2"></i>
+            Create New Trip
+        </h1>
+        <p class="text-muted mt-2">Schedule employee transport to {{ office.name }}</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Trip Creation Form -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-route me-2"></i>
+                    Trip Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="trip-form">
+                    <div class="row">
+                        <!-- Pickup Location -->
+                        <div class="col-md-6 mb-3">
+                            <label for="pickup-location" class="form-label">Pickup Location</label>
+                            <select class="form-select" id="pickup-location" required>
+                                <option value="">Select pickup area...</option>
+                                {% for zone_name, zone_data in zones.items() %}
+                                    {% if zone_name != 'Non_Hiring' %}
+                                        <optgroup label="{{ zone_name }} Zone">
+                                            {% for area in zone_data.areas %}
+                                                <option value="{{ area }}" data-zone="{{ zone_name }}">{{ area }}</option>
+                                            {% endfor %}
+                                        </optgroup>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select employee's pickup location</div>
+                        </div>
+                        
+                        <!-- Destination -->
+                        <div class="col-md-6 mb-3">
+                            <label for="destination" class="form-label">Destination</label>
+                            <input type="text" class="form-control" id="destination" value="{{ office.name }}, {{ office.address }}" readonly>
+                            <div class="form-text">Fixed destination: WNS Vuram office</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Employee ID -->
+                        <div class="col-md-6 mb-3">
+                            <label for="employee-id" class="form-label">Employee ID</label>
+                            <input type="number" class="form-control" id="employee-id" placeholder="Enter employee ID" required>
+                            <div class="form-text">Internal employee identification number</div>
+                        </div>
+                        
+                        <!-- Scheduled Time -->
+                        <div class="col-md-6 mb-3">
+                            <label for="scheduled-time" class="form-label">Scheduled Time</label>
+                            <input type="datetime-local" class="form-control" id="scheduled-time" required>
+                            <div class="form-text">When should the pickup occur?</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Additional Notes</label>
+                        <textarea class="form-control" id="notes" rows="3" placeholder="Any special instructions or requirements..."></textarea>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearForm()">
+                            <i class="fas fa-times me-2"></i>Clear Form
+                        </button>
+                        <button type="button" class="btn btn-wns" onclick="calculateETA()">
+                            <i class="fas fa-calculator me-2"></i>Calculate ETA
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-2"></i>Create Trip
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trip Preview & Analytics -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-eye me-2"></i>
+                    Trip Preview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="trip-preview">
+                    <p class="text-muted">Fill the form to see trip preview</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Features Section -->
+<div class="row mb-4">
+    <!-- Zone Information -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-map-marked-alt me-2"></i>
+                    Selected Zone Info
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="zone-info">
+                    <p class="text-muted">Select a pickup location to view zone information</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Driver Assignment Preview -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    Optimal Driver Assignment
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="driver-assignment">
+                    <p class="text-muted">Calculate ETA to see driver recommendations</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Route Visualization -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-route me-2"></i>
+                    Route Visualization
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div id="route-map" style="height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WNS Transport Policy Reference -->
+<div class="row">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    WNS Bangalore Transport Policy Quick Reference
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <h6 class="text-primary">Timing Guidelines</h6>
+                        <ul class="list-unstyled small">
+                            <li>• Sociable: 06:30 - 20:30</li>
+                            <li>• Unsociable: 20:30 - 06:30</li>
+                            <li>• Buffer: 15 min before login</li>
+                            <li>• Buffer: 20 min after logout</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-success">Travel Times</h6>
+                        <ul class="list-unstyled small">
+                            <li>• 0-10km: 0-60 minutes</li>
+                            <li>• 11-20km: 60-90 minutes</li>
+                            <li>• 21-30km: 90-120 minutes</li>
+                            <li>• 30km+: 120-150 minutes</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-warning">Zone Coverage</h6>
+                        <ul class="list-unstyled small">
+                            <li>• East: IT corridor, Whitefield</li>
+                            <li>• West: Residential areas</li>
+                            <li>• North: Industrial, Airport</li>
+                            <li>• South: Electronic City</li>
+                            <li>• Central: City center</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-info">Smart Features</h6>
+                        <ul class="list-unstyled small">
+                            <li>• Zone-based assignment</li>
+                            <li>• Traffic-aware ETA</li>
+                            <li>• Real-time tracking</li>
+                            <li>• Policy compliance</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let routeMap;
+let pickupMarker;
+let routeLine;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeRouteMap();
+    setupFormListeners();
+    setDefaultDateTime();
+});
+
+function initializeRouteMap() {
+    // Center map between office and general Bangalore area
+    routeMap = L.map('route-map').setView([12.9716, 77.6500], 11);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(routeMap);
+    
+    // Add office marker
+    const officeIcon = L.divIcon({
+        html: '<i class="fas fa-building text-success fa-lg"></i>',
+        iconSize: [25, 25],
+        className: 'custom-div-icon'
+    });
+    
+    L.marker([{{ office.coordinates.lat }}, {{ office.coordinates.lng }}], {icon: officeIcon})
+        .addTo(routeMap)
+        .bindPopup('<b>{{ office.name }}</b><br>Destination')
+        .openPopup();
+}
+
+function setupFormListeners() {
+    // Pickup location change listener
+    document.getElementById('pickup-location').addEventListener('change', function() {
+        updateZoneInfo();
+        updateRouteMap();
+    });
+    
+    // Form submission
+    document.getElementById('trip-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        createTrip();
+    });
+    
+    // Real-time form preview
+    const formInputs = ['pickup-location', 'employee-id', 'scheduled-time', 'notes'];
+    formInputs.forEach(inputId => {
+        document.getElementById(inputId).addEventListener('input', updateTripPreview);
+        document.getElementById(inputId).addEventListener('change', updateTripPreview);
+    });
+}
+
+function setDefaultDateTime() {
+    // Set default to tomorrow 9 AM
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(9, 0, 0, 0);
+    
+    const datetime = tomorrow.toISOString().slice(0, 16);
+    document.getElementById('scheduled-time').value = datetime;
+}
+
+function updateZoneInfo() {
+    const select = document.getElementById('pickup-location');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (selectedOption.value) {
+        const zone = selectedOption.dataset.zone;
+        const location = selectedOption.value;
+        
+        // Zone data from backend
+        const zoneData = {
+            {% for zone_name, zone_data in zones.items() %}
+                {% if zone_name != 'Non_Hiring' %}
+                '{{ zone_name }}': {
+                    coverage: '{{ zone_data.coverage }}',
+                    areas: {{ zone_data.areas|length }}
+                },
+                {% endif %}
+            {% endfor %}
+        };
+        
+        if (zoneData[zone]) {
+            document.getElementById('zone-info').innerHTML = `
+                <div class="mb-3">
+                    <h6>
+                        <span class="zone-badge zone-${zone.toLowerCase()}">${zone}</span>
+                        Zone
+                    </h6>
+                    <p class="mb-2">${zoneData[zone].coverage}</p>
+                    <small class="text-muted">Total areas in zone: ${zoneData[zone].areas}</small>
+                </div>
+                
+                <div class="row text-center">
+                    <div class="col-4">
+                        <i class="fas fa-route text-primary"></i>
+                        <div class="mt-1">
+                            <small class="text-muted">Estimated</small>
+                            <div><strong>25-45m</strong></div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <i class="fas fa-users text-success"></i>
+                        <div class="mt-1">
+                            <small class="text-muted">Drivers</small>
+                            <div><strong>3-5</strong></div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <i class="fas fa-star text-warning"></i>
+                        <div class="mt-1">
+                            <small class="text-muted">Priority</small>
+                            <div><strong>High</strong></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    } else {
+        document.getElementById('zone-info').innerHTML = '<p class="text-muted">Select a pickup location to view zone information</p>';
+    }
+}
+
+function updateRouteMap() {
+    const select = document.getElementById('pickup-location');
+    const location = select.value;
+    
+    if (location) {
+        // Remove existing markers and route
+        if (pickupMarker) {
+            routeMap.removeLayer(pickupMarker);
+        }
+        if (routeLine) {
+            routeMap.removeLayer(routeLine);
+        }
+        
+        // Simulate pickup coordinates (in real app, use geocoding)
+        const pickupCoords = getLocationCoordinates(location);
+        
+        // Add pickup marker
+        const pickupIcon = L.divIcon({
+            html: '<i class="fas fa-map-pin text-primary fa-lg"></i>',
+            iconSize: [25, 25],
+            className: 'custom-div-icon'
+        });
+        
+        pickupMarker = L.marker(pickupCoords, {icon: pickupIcon})
+            .addTo(routeMap)
+            .bindPopup(`<b>Pickup Location</b><br>${location}`);
+        
+        // Draw route line
+        routeLine = L.polyline([pickupCoords, [{{ office.coordinates.lat }}, {{ office.coordinates.lng }}]], {
+            color: '#3b82f6',
+            weight: 3,
+            opacity: 0.7,
+            dashArray: '10, 5'
+        }).addTo(routeMap);
+        
+        // Fit map to show both points
+        const group = new L.featureGroup([pickupMarker, routeLine]);
+        routeMap.fitBounds(group.getBounds(), {padding: [20, 20]});
+    }
+}
+
+function getLocationCoordinates(location) {
+    // Simplified coordinate mapping for demo
+    const locationCoords = {
+        'Yelahanka': [13.1056, 77.5945],
+        'Whitefield': [12.9698, 77.7500],
+        'Electronic City': [12.8395, 77.6638],
+        'JP Nagar 9th Phase': [12.8915, 77.5833],
+        'Hebbal': [13.0500, 77.5833],
+        'Kengeri': [12.9080, 77.4850]
+    };
+    
+    // Return coordinates or default to Bangalore center
+    return locationCoords[location] || [12.9716, 77.5946];
+}
+
+function updateTripPreview() {
+    const pickupLocation = document.getElementById('pickup-location').value;
+    const employeeId = document.getElementById('employee-id').value;
+    const scheduledTime = document.getElementById('scheduled-time').value;
+    const notes = document.getElementById('notes').value;
+    
+    if (pickupLocation || employeeId || scheduledTime) {
+        const timeFormatted = scheduledTime ? new Date(scheduledTime).toLocaleString() : 'Not set';
+        
+        document.getElementById('trip-preview').innerHTML = `
+            <div class="mb-3">
+                <h6 class="text-primary">Trip Summary</h6>
+                <div class="small">
+                    <div class="mb-1"><strong>From:</strong> ${pickupLocation || 'Not selected'}</div>
+                    <div class="mb-1"><strong>To:</strong> {{ office.name }}</div>
+                    <div class="mb-1"><strong>Employee:</strong> ${employeeId || 'Not specified'}</div>
+                    <div class="mb-1"><strong>Time:</strong> ${timeFormatted}</div>
+                    ${notes ? `<div class="mb-1"><strong>Notes:</strong> ${notes}</div>` : ''}
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <h6 class="text-success">Status</h6>
+                <span class="badge bg-warning">Ready to Create</span>
+            </div>
+            
+            <div class="alert alert-info small" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                Trip will be assigned to optimal driver based on zone and availability.
+            </div>
+        `;
+    } else {
+        document.getElementById('trip-preview').innerHTML = '<p class="text-muted">Fill the form to see trip preview</p>';
+    }
+}
+
+async function calculateETA() {
+    const pickupLocation = document.getElementById('pickup-location').value;
+    const scheduledTime = document.getElementById('scheduled-time').value;
+    
+    if (!pickupLocation) {
+        showNotification('Please select a pickup location first', 'warning');
+        return;
+    }
+    
+    showNotification('Calculating optimal ETA and driver assignment...', 'info');
+    
+    try {
+        // Get ETA calculation
+        const etaResponse = await fetch(`/api/eta/calculate?pickup_location=${encodeURIComponent(pickupLocation)}&shift_time=${scheduledTime.split('T')[1] || '09:00'}`);
+        const etaData = await etaResponse.json();
+        
+        // Get driver assignment
+        const driverResponse = await fetch(`/api/drivers/optimal?location=${encodeURIComponent(pickupLocation)}&shift_time=${scheduledTime.split('T')[1] || '09:00'}`);
+        const driverData = await driverResponse.json();
+        
+        // Update ETA display
+        updateETADisplay(etaData, driverData);
+        
+        showNotification('ETA calculated successfully!', 'success');
+        
+    } catch (error) {
+        console.error('ETA calculation failed:', error);
+        showNotification('Failed to calculate ETA. Using estimated values.', 'warning');
+        
+        // Show mock data for demo
+        updateETADisplay({
+            pickup_location: pickupLocation,
+            distance_from_office: {distance_km: 15.5, estimated_time_minutes: 35},
+            pickup_time: "08:25",
+            zone: "East",
+            traffic_condition: "Moderate Traffic"
+        }, {
+            employee_zone: "East",
+            recommended_drivers: [
+                {driver: {name: "Rajesh Kumar", service_area: "Whitefield-Yelahanka"}, zone_match: true},
+                {driver: {name: "Suresh Patil", service_area: "East Bangalore"}, zone_match: true}
+            ]
+        });
+    }
+}
+
+function updateETADisplay(etaData, driverData) {
+    document.getElementById('driver-assignment').innerHTML = `
+        <div class="mb-3">
+            <h6 class="text-primary">Recommended Drivers</h6>
+            ${driverData.recommended_drivers.slice(0, 2).map(d => `
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                    <div>
+                        <strong>${d.driver.name}</strong>
+                        <br><small class="text-muted">${d.driver.service_area}</small>
+                    </div>
+                    <span class="badge ${d.zone_match ? 'bg-success' : 'bg-warning'}">
+                        ${d.zone_match ? 'Zone Match' : 'Nearby'}
+                    </span>
+                </div>
+            `).join('')}
+        </div>
+        
+        <div class="mb-3">
+            <h6 class="text-success">ETA Information</h6>
+            <div class="small">
+                <div class="mb-1"><strong>Distance:</strong> ${etaData.distance_from_office?.distance_km || 'N/A'} km</div>
+                <div class="mb-1"><strong>Travel Time:</strong> ${etaData.distance_from_office?.estimated_time_minutes || 'N/A'} minutes</div>
+                <div class="mb-1"><strong>Pickup Time:</strong> ${etaData.pickup_time || 'N/A'}</div>
+                <div class="mb-1"><strong>Traffic:</strong> ${etaData.traffic_condition || 'Normal'}</div>
+            </div>
+        </div>
+        
+        <div class="alert alert-success small" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            Optimal assignment calculated based on WNS policy
+        </div>
+    `;
+}
+
+async function createTrip() {
+    const formData = {
+        pickup_location: document.getElementById('pickup-location').value,
+        destination: document.getElementById('destination').value,
+        employee_id: parseInt(document.getElementById('employee-id').value),
+        scheduled_time: document.getElementById('scheduled-time').value,
+        notes: document.getElementById('notes').value
+    };
+    
+    // Validation
+    if (!formData.pickup_location || !formData.employee_id || !formData.scheduled_time) {
+        showNotification('Please fill all required fields', 'danger');
+        return;
+    }
+    
+    showNotification('Creating trip with enhanced features...', 'info');
+    
+    try {
+        const response = await fetch('/api/trips/enhanced', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showNotification('Trip created successfully with Bangalore-specific enhancements!', 'success');
+            
+            // Show creation success modal or redirect
+            setTimeout(() => {
+                if (confirm('Trip created successfully! Would you like to start live tracking?')) {
+                    window.location.href = '/tracking';
+                } else {
+                    clearForm();
+                }
+            }, 1500);
+        } else {
+            throw new Error(result.detail || 'Failed to create trip');
+        }
+        
+    } catch (error) {
+        console.error('Trip creation failed:', error);
+        showNotification(`Failed to create trip: ${error.message}`, 'danger');
+    }
+}
+
+function clearForm() {
+    document.getElementById('trip-form').reset();
+    document.getElementById('trip-preview').innerHTML = '<p class="text-muted">Fill the form to see trip preview</p>';
+    document.getElementById('zone-info').innerHTML = '<p class="text-muted">Select a pickup location to view zone information</p>';
+    document.getElementById('driver-assignment').innerHTML = '<p class="text-muted">Calculate ETA to see driver recommendations</p>';
+    
+    // Clear map markers
+    if (pickupMarker) {
+        routeMap.removeLayer(pickupMarker);
+        pickupMarker = null;
+    }
+    if (routeLine) {
+        routeMap.removeLayer(routeLine);
+        routeLine = null;
+    }
+    
+    setDefaultDateTime();
+}
+</script>
+{% endblock %}
