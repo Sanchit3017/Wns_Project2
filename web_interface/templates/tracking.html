@@ -1,0 +1,506 @@
+{% extends "base.html" %}
+
+{% block title %}Live Tracking - WNS Bangalore Transport{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-location-arrow text-primary me-2"></i>
+            Live Trip Tracking
+        </h1>
+        <p class="text-muted mt-2">Real-time monitoring of active trips in Bangalore</p>
+    </div>
+</div>
+
+<!-- Trip Selection -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-search me-2"></i>
+                    Select Trip to Track
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="trip-select" class="form-label">Active Trips</label>
+                    <select class="form-select" id="trip-select" onchange="selectTrip()">
+                        <option value="">Choose a trip...</option>
+                        <option value="1">Trip #T001 - Yelahanka to Whitefield</option>
+                        <option value="2">Trip #T002 - Electronic City to Whitefield</option>
+                        <option value="3">Trip #T003 - JP Nagar to Whitefield</option>
+                        <option value="4">Trip #T004 - Hebbal to Whitefield</option>
+                    </select>
+                </div>
+                <button class="btn btn-wns" onclick="startTracking()">
+                    <i class="fas fa-play me-2"></i>Start Live Tracking
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Trip Details
+                </h5>
+            </div>
+            <div class="card-body" id="trip-details">
+                <p class="text-muted">Select a trip to view details</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Live Tracking Interface -->
+<div class="row" id="tracking-interface" style="display: none;">
+    <!-- Map View -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-map me-2"></i>
+                    Live Location
+                </h5>
+                <div>
+                    <span class="status-indicator status-active live-update"></span>
+                    <span class="badge bg-success">Tracking Active</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="tracking-map" style="height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trip Information Panel -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-route me-2"></i>
+                    Trip Progress
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Progress Bar -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-muted">Progress</small>
+                        <small class="text-muted" id="progress-percentage">0%</small>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 0%" id="progress-bar"></div>
+                    </div>
+                </div>
+                
+                <!-- Trip Status -->
+                <div class="mb-4">
+                    <h6>Current Status</h6>
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator status-active"></span>
+                        <span id="trip-status">En Route</span>
+                    </div>
+                </div>
+                
+                <!-- ETA Information -->
+                <div class="mb-4">
+                    <h6>Estimated Arrival</h6>
+                    <div class="d-flex justify-content-between">
+                        <span>ETA:</span>
+                        <strong id="eta-time">--:--</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Time Remaining:</span>
+                        <strong id="time-remaining">-- min</strong>
+                    </div>
+                </div>
+                
+                <!-- Driver Information -->
+                <div class="mb-4">
+                    <h6>Driver Details</h6>
+                    <div id="driver-info">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-user-tie me-2"></i>
+                            <span id="driver-name">Rajesh Kumar</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-phone me-2"></i>
+                            <span id="driver-phone">+91 98765 43210</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-car me-2"></i>
+                            <span id="vehicle-info">KA-01-AB-1234</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Live Updates */
+                <div class="mb-4">
+                    <h6>Live Updates</h6>
+                    <div id="live-updates" class="small">
+                        <div class="mb-2">
+                            <span class="text-success">●</span>
+                            <span class="ms-2">Driver started trip</span>
+                            <br><small class="text-muted ms-3">2 min ago</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="contactDriver()">
+                        <i class="fas fa-phone me-2"></i>Contact Driver
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="reportIssue()">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Report Issue
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="stopTracking()">
+                        <i class="fas fa-stop me-2"></i>Stop Tracking
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Traffic and Zone Information -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-traffic-light me-2"></i>
+                    Traffic Conditions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <i class="fas fa-road fa-2x text-success mb-2"></i>
+                            <h6>ITPL Main Road</h6>
+                            <span class="badge bg-success">Clear</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <i class="fas fa-road fa-2x text-warning mb-2"></i>
+                            <h6>Outer Ring Road</h6>
+                            <span class="badge bg-warning">Moderate</span>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <i class="fas fa-road fa-2x text-danger mb-2"></i>
+                            <h6>Sarjapur Road</h6>
+                            <span class="badge bg-danger">Heavy</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <i class="fas fa-road fa-2x text-info mb-2"></i>
+                            <h6>Whitefield Road</h6>
+                            <span class="badge bg-info">Light</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Today's Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="mb-2">
+                            <i class="fas fa-check-circle text-success fa-lg"></i>
+                            <h6 class="mt-1">18</h6>
+                            <small class="text-muted">Completed</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="mb-2">
+                            <i class="fas fa-car text-primary fa-lg"></i>
+                            <h6 class="mt-1">5</h6>
+                            <small class="text-muted">Active</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="mb-2">
+                            <i class="fas fa-clock text-warning fa-lg"></i>
+                            <h6 class="mt-1">2</h6>
+                            <small class="text-muted">Pending</small>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <small class="text-muted">Average Trip Time: <strong>28 minutes</strong></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let trackingMap;
+let driverMarker;
+let routeLine;
+let currentTripId = null;
+let trackingInterval;
+
+const tripData = {
+    1: {
+        id: 1,
+        name: "Trip #T001 - Yelahanka to Whitefield",
+        pickup: "Yelahanka New Town",
+        destination: "WNS Vuram, Whitefield",
+        driver: "Rajesh Kumar",
+        phone: "+91 98765 43210",
+        vehicle: "KA-01-AB-1234",
+        startCoords: [13.1056, 77.5945],
+        endCoords: [12.9698, 77.7500],
+        currentCoords: [13.0500, 77.6200]
+    },
+    2: {
+        id: 2,
+        name: "Trip #T002 - Electronic City to Whitefield",
+        pickup: "Electronic City Phase 1",
+        destination: "WNS Vuram, Whitefield",
+        driver: "Suresh Patil",
+        phone: "+91 98765 43211",
+        vehicle: "KA-01-CD-5678",
+        startCoords: [12.8395, 77.6638],
+        endCoords: [12.9698, 77.7500],
+        currentCoords: [12.8800, 77.7000]
+    }
+};
+
+function selectTrip() {
+    const select = document.getElementById('trip-select');
+    const tripId = select.value;
+    
+    if (tripId && tripData[tripId]) {
+        const trip = tripData[tripId];
+        document.getElementById('trip-details').innerHTML = `
+            <div class="mb-2">
+                <strong>Route:</strong> ${trip.pickup} → ${trip.destination}
+            </div>
+            <div class="mb-2">
+                <strong>Driver:</strong> ${trip.driver}
+            </div>
+            <div class="mb-2">
+                <strong>Vehicle:</strong> ${trip.vehicle}
+            </div>
+            <div class="mb-2">
+                <strong>Status:</strong> <span class="badge bg-warning">Ready to Track</span>
+            </div>
+        `;
+        currentTripId = tripId;
+    } else {
+        document.getElementById('trip-details').innerHTML = '<p class="text-muted">Select a trip to view details</p>';
+        currentTripId = null;
+    }
+}
+
+function startTracking() {
+    if (!currentTripId) {
+        showNotification('Please select a trip to track', 'warning');
+        return;
+    }
+    
+    document.getElementById('tracking-interface').style.display = 'block';
+    initializeTrackingMap();
+    startLiveUpdates();
+    
+    showNotification('Live tracking started successfully!', 'success');
+}
+
+function initializeTrackingMap() {
+    if (!currentTripId || !tripData[currentTripId]) return;
+    
+    const trip = tripData[currentTripId];
+    
+    // Initialize map centered between start and current position
+    const centerLat = (trip.startCoords[0] + trip.currentCoords[0]) / 2;
+    const centerLng = (trip.startCoords[1] + trip.currentCoords[1]) / 2;
+    
+    trackingMap = L.map('tracking-map').setView([centerLat, centerLng], 12);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(trackingMap);
+    
+    // Add pickup location marker
+    L.marker(trip.startCoords)
+        .addTo(trackingMap)
+        .bindPopup(`<b>Pickup Location</b><br>${trip.pickup}`)
+        .openPopup();
+    
+    // Add destination marker
+    const destinationIcon = L.divIcon({
+        html: '<i class="fas fa-building text-success"></i>',
+        iconSize: [20, 20],
+        className: 'custom-div-icon'
+    });
+    
+    L.marker(trip.endCoords, {icon: destinationIcon})
+        .addTo(trackingMap)
+        .bindPopup(`<b>Destination</b><br>${trip.destination}`);
+    
+    // Add driver's current location
+    const driverIcon = L.divIcon({
+        html: '<i class="fas fa-car text-primary"></i>',
+        iconSize: [20, 20],
+        className: 'custom-div-icon'
+    });
+    
+    driverMarker = L.marker(trip.currentCoords, {icon: driverIcon})
+        .addTo(trackingMap)
+        .bindPopup(`<b>${trip.driver}</b><br>Vehicle: ${trip.vehicle}`);
+    
+    // Draw route line
+    routeLine = L.polyline([trip.startCoords, trip.currentCoords, trip.endCoords], {
+        color: '#3b82f6',
+        weight: 4,
+        opacity: 0.7
+    }).addTo(trackingMap);
+    
+    // Fit map to show all markers
+    trackingMap.fitBounds(routeLine.getBounds(), {padding: [20, 20]});
+    
+    // Update trip info
+    updateTripInfo(trip);
+}
+
+function updateTripInfo(trip) {
+    document.getElementById('driver-name').textContent = trip.driver;
+    document.getElementById('driver-phone').textContent = trip.phone;
+    document.getElementById('vehicle-info').textContent = trip.vehicle;
+    
+    // Calculate progress (simplified)
+    const progress = Math.random() * 100; // In real app, calculate based on distance
+    document.getElementById('progress-bar').style.width = progress + '%';
+    document.getElementById('progress-percentage').textContent = Math.round(progress) + '%';
+    
+    // Update ETA
+    const eta = new Date(Date.now() + Math.random() * 30 * 60000); // Random ETA within 30 min
+    document.getElementById('eta-time').textContent = eta.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    document.getElementById('time-remaining').textContent = Math.round(Math.random() * 30) + ' min';
+}
+
+function startLiveUpdates() {
+    if (trackingInterval) clearInterval(trackingInterval);
+    
+    trackingInterval = setInterval(() => {
+        if (currentTripId && tripData[currentTripId]) {
+            updateDriverLocation();
+            addLiveUpdate();
+        }
+    }, 5000); // Update every 5 seconds
+}
+
+function updateDriverLocation() {
+    const trip = tripData[currentTripId];
+    
+    // Simulate movement towards destination
+    const currentLat = trip.currentCoords[0];
+    const currentLng = trip.currentCoords[1];
+    const destLat = trip.endCoords[0];
+    const destLng = trip.endCoords[1];
+    
+    // Move slightly towards destination
+    const newLat = currentLat + (destLat - currentLat) * 0.02;
+    const newLng = currentLng + (destLng - currentLng) * 0.02;
+    
+    trip.currentCoords = [newLat, newLng];
+    
+    // Update marker position
+    if (driverMarker) {
+        driverMarker.setLatLng([newLat, newLng]);
+    }
+    
+    // Update route line
+    if (routeLine) {
+        routeLine.setLatLngs([trip.startCoords, [newLat, newLng], trip.endCoords]);
+    }
+    
+    updateTripInfo(trip);
+}
+
+function addLiveUpdate() {
+    const updates = [
+        'Driver reached checkpoint',
+        'Traffic cleared ahead',
+        'ETA updated',
+        'Location verified',
+        'Route optimized'
+    ];
+    
+    const update = updates[Math.floor(Math.random() * updates.length)];
+    const updatesContainer = document.getElementById('live-updates');
+    
+    const newUpdate = document.createElement('div');
+    newUpdate.className = 'mb-2';
+    newUpdate.innerHTML = `
+        <span class="text-success">●</span>
+        <span class="ms-2">${update}</span>
+        <br><small class="text-muted ms-3">Just now</small>
+    `;
+    
+    updatesContainer.insertBefore(newUpdate, updatesContainer.firstChild);
+    
+    // Keep only last 3 updates
+    while (updatesContainer.children.length > 3) {
+        updatesContainer.removeChild(updatesContainer.lastChild);
+    }
+}
+
+function contactDriver() {
+    if (currentTripId && tripData[currentTripId]) {
+        const phone = tripData[currentTripId].phone;
+        showNotification(`Calling driver at ${phone}...`, 'info');
+    }
+}
+
+function reportIssue() {
+    showNotification('Issue reporting form opened', 'warning');
+}
+
+function stopTracking() {
+    if (trackingInterval) {
+        clearInterval(trackingInterval);
+        trackingInterval = null;
+    }
+    
+    document.getElementById('tracking-interface').style.display = 'none';
+    currentTripId = null;
+    
+    showNotification('Tracking stopped', 'info');
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-select first trip for demo
+    document.getElementById('trip-select').value = '1';
+    selectTrip();
+});
+</script>
+{% endblock %}

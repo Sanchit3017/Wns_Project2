@@ -24,6 +24,10 @@ args = "Microservices"
 task = "workflow.run"
 args = "Travel Management API"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Enhanced Web Interface"
+
 [[workflows.workflow]]
 name = "FastAPI Server"
 author = "agent"
@@ -51,6 +55,15 @@ author = "agent"
 task = "shell.exec"
 args = "python run_microservices.py"
 waitForPort = 8000
+
+[[workflows.workflow]]
+name = "Enhanced Web Interface"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd web_interface && python app.py"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000

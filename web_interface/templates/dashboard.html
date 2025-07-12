@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - WNS Bangalore Transport{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-tachometer-alt text-primary me-2"></i>
+                WNS Bangalore Transport Dashboard
+            </h1>
+            <div class="d-flex align-items-center">
+                <span class="status-indicator status-active live-update"></span>
+                <small class="text-muted">Live Updates Active</small>
+            </div>
+        </div>
+        <p class="text-muted mt-2">Real-time monitoring for {{ office.name }} - {{ office.address }}</p>
+    </div>
+</div>
+
+<!-- Key Statistics Row -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-car fa-2x mb-2"></i>
+                <h4 class="mb-1" id="active-trips">12</h4>
+                <small>Active Trips</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <h4 class="mb-1" id="available-drivers">8</h4>
+                <small>Available Drivers</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-map-marked-alt fa-2x mb-2"></i>
+                <h4 class="mb-1">{{ zones|length - 1 }}</h4>
+                <small>Coverage Zones</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-traffic-light fa-2x mb-2"></i>
+                <h4 class="mb-1" id="traffic-status">Normal</h4>
+                <small>Traffic Status</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Row -->
+<div class="row">
+    <!-- Zone Coverage Map -->
+    <div class="col-lg-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-map me-2"></i>
+                    Bangalore Zone Coverage
+                </h5>
+                <span class="badge bg-primary">Live View</span>
+            </div>
+            <div class="card-body">
+                <div id="bangalore-map" class="map-container"></div>
+                <div class="mt-3">
+                    <div class="row">
+                        {% for zone_name, zone_data in zones.items() %}
+                            {% if zone_name != 'Non_Hiring' %}
+                            <div class="col-md-2 mb-2">
+                                <span class="zone-badge zone-{{ zone_name.lower() }}">
+                                    {{ zone_name }}
+                                </span>
+                                <small class="d-block text-muted">{{ zone_data.areas|length }} areas</small>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Activity Feed -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-broadcast-tower me-2"></i>
+                    Live Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline" id="activity-timeline">
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between">
+                            <strong>Driver assigned</strong>
+                            <small class="text-muted">2 min ago</small>
+                        </div>
+                        <p class="mb-0 text-muted">Trip #T001 - Yelahanka to Whitefield</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between">
+                            <strong>Trip completed</strong>
+                            <small class="text-muted">5 min ago</small>
+                        </div>
+                        <p class="mb-0 text-muted">Trip #T002 - Electronic City pickup</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between">
+                            <strong>New trip request</strong>
+                            <small class="text-muted">8 min ago</small>
+                        </div>
+                        <p class="mb-0 text-muted">Employee pickup from JP Nagar</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between">
+                            <strong>Traffic alert</strong>
+                            <small class="text-muted">12 min ago</small>
+                        </div>
+                        <p class="mb-0 text-muted">Heavy traffic on ITPL Main Road</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Zone Statistics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Zone-wise Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for zone_name, zone_data in zones.items() %}
+                        {% if zone_name != 'Non_Hiring' %}
+                        <div class="col-md-2 mb-3">
+                            <div class="card zone-card">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">{{ zone_name }}</h6>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="text-primary">
+                                                <i class="fas fa-car"></i>
+                                                <span class="d-block">{{ (loop.index % 6) + 1 }}</span>
+                                                <small>Trips</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-success">
+                                                <i class="fas fa-user"></i>
+                                                <span class="d-block">{{ (loop.index % 4) + 1 }}</span>
+                                                <small>Drivers</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">{{ zone_data.coverage }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-rocket me-2"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/trips/create" class="btn btn-wns">
+                        <i class="fas fa-plus me-2"></i>Create New Trip
+                    </a>
+                    <button class="btn btn-outline-primary" onclick="refreshDrivers()">
+                        <i class="fas fa-sync me-2"></i>Refresh Driver Status
+                    </button>
+                    <button class="btn btn-outline-success" onclick="viewAllTrips()">
+                        <i class="fas fa-list me-2"></i>View All Trips
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    WNS Transport Policy
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-clock text-primary me-2"></i>Sociable Hours: 06:30 - 20:30</li>
+                    <li><i class="fas fa-map-pin text-success me-2"></i>15 min before login buffer</li>
+                    <li><i class="fas fa-route text-warning me-2"></i>20 min after logout buffer</li>
+                    <li><i class="fas fa-shield-alt text-info me-2"></i>Zone-based assignments</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Chart -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Daily Performance Metrics
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="performanceChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bangalore map
+    initializeBangaloreMap();
+    
+    // Initialize performance chart
+    initializePerformanceChart();
+    
+    // Start real-time updates
+    startRealTimeUpdates();
+});
+
+function initializeBangaloreMap() {
+    // Center on WNS Vuram office location
+    const map = L.map('bangalore-map').setView([{{ office.coordinates.lat }}, {{ office.coordinates.lng }}], 11);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Add office marker
+    const officeIcon = L.divIcon({
+        html: '<i class="fas fa-building text-primary"></i>',
+        iconSize: [20, 20],
+        className: 'custom-div-icon'
+    });
+    
+    L.marker([{{ office.coordinates.lat }}, {{ office.coordinates.lng }}], {icon: officeIcon})
+        .addTo(map)
+        .bindPopup('<b>{{ office.name }}</b><br>{{ office.address }}');
+    
+    // Add zone coverage circles (simulated)
+    const zoneColors = {
+        'East': '#3b82f6',
+        'West': '#f59e0b', 
+        'North': '#10b981',
+        'South': '#ef4444',
+        'Central': '#8b5cf6'
+    };
+    
+    {% for zone_name, zone_data in zones.items() %}
+        {% if zone_name != 'Non_Hiring' %}
+        L.circle([{{ office.coordinates.lat + (loop.index0 * 0.01) }}, {{ office.coordinates.lng + (loop.index0 * 0.01) }}], {
+            color: '{{ zoneColors[zone_name] if zone_name in zoneColors else "#6b7280" }}',
+            fillColor: '{{ zoneColors[zone_name] if zone_name in zoneColors else "#6b7280" }}',
+            fillOpacity: 0.2,
+            radius: 5000
+        }).addTo(map).bindPopup('<b>{{ zone_name }} Zone</b><br>{{ zone_data.areas|length }} areas covered');
+        {% endif %}
+    {% endfor %}
+}
+
+function initializePerformanceChart() {
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['6 AM', '8 AM', '10 AM', '12 PM', '2 PM', '4 PM', '6 PM', '8 PM'],
+            datasets: [{
+                label: 'Active Trips',
+                data: [2, 8, 12, 15, 18, 22, 16, 8],
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Available Drivers',
+                data: [15, 12, 8, 5, 3, 2, 6, 12],
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function startRealTimeUpdates() {
+    // Simulate real-time activity updates
+    setInterval(function() {
+        addActivityUpdate();
+    }, 15000); // Update every 15 seconds
+}
+
+function addActivityUpdate() {
+    const activities = [
+        'Driver assigned to new trip',
+        'Trip completed successfully', 
+        'New pickup request received',
+        'Traffic alert updated',
+        'Driver status changed to available',
+        'Route optimization completed'
+    ];
+    
+    const locations = ['Yelahanka', 'Whitefield', 'Electronic City', 'JP Nagar', 'Hebbal', 'Koramangala'];
+    
+    const timeline = document.getElementById('activity-timeline');
+    const activity = activities[Math.floor(Math.random() * activities.length)];
+    const location = locations[Math.floor(Math.random() * locations.length)];
+    
+    const newItem = document.createElement('div');
+    newItem.className = 'timeline-item';
+    newItem.innerHTML = `
+        <div class="d-flex justify-content-between">
+            <strong>${activity}</strong>
+            <small class="text-muted">Just now</small>
+        </div>
+        <p class="mb-0 text-muted">Location: ${location}</p>
+    `;
+    
+    timeline.insertBefore(newItem, timeline.firstChild);
+    
+    // Remove old items (keep only last 4)
+    while (timeline.children.length > 4) {
+        timeline.removeChild(timeline.lastChild);
+    }
+}
+
+function refreshDrivers() {
+    showNotification('Refreshing driver status...', 'info');
+    // Simulate API call
+    setTimeout(() => {
+        showNotification('Driver status updated successfully!', 'success');
+    }, 1500);
+}
+
+function viewAllTrips() {
+    showNotification('Loading trip details...', 'info');
+    // In real implementation, this would navigate to trips page
+}
+</script>
+{% endblock %}
