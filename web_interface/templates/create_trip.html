@@ -610,7 +610,20 @@ class TripCreator {
             return field && field.value.trim() !== '';
         });
 
-        document.getElementById('next-step').disabled = !allValid;
+        // Additional validation for employee ID - must be a valid integer
+        const employeeId = document.getElementById('employee-id').value;
+        const isValidEmployeeId = employeeId && !isNaN(parseInt(employeeId));
+
+        const isFormValid = allValid && isValidEmployeeId;
+        document.getElementById('next-step').disabled = !isFormValid;
+
+        // Update button text based on validation state
+        const nextButton = document.getElementById('next-step');
+        if (!isValidEmployeeId && employeeId) {
+            nextButton.textContent = 'Please select valid employee';
+        } else {
+            nextButton.textContent = 'Review Trip Details';
+        }
     }
 
     async calculateETA() {
@@ -704,12 +717,27 @@ class TripCreator {
     }
 
     async submitTrip() {
+        // Validate employee data before submission
+        const employeeIdField = document.getElementById('employee-id');
+        const employeeNameField = document.getElementById('employee-name');
+        
+        if (!employeeIdField.value || !employeeNameField.value) {
+            alert('Please select a valid employee using the search functionality.');
+            return;
+        }
+
+        const employeeId = parseInt(employeeIdField.value);
+        if (isNaN(employeeId)) {
+            alert('Invalid employee ID. Please select an employee from the search results.');
+            return;
+        }
+
         const tripData = {
-            employee_id: parseInt(document.getElementById('employee-id').value),
+            employee_id: employeeId,
             pickup_location: `${document.getElementById('pickup-area').value}, ${document.getElementById('pickup-zone').value} Zone`,
             destination: document.getElementById('destination').value,
             scheduled_time: `${document.getElementById('trip-date').value} ${document.getElementById('pickup-time').value}`,
-            notes: document.getElementById('notes').value
+            notes: document.getElementById('notes').value || ''
         };
 
         try {
@@ -726,11 +754,13 @@ class TripCreator {
                 document.getElementById('trip-id').textContent = result.trip_id || 'TRP-12345';
                 this.goToStep(3);
             } else {
-                throw new Error('Failed to create trip');
+                const errorData = await response.json();
+                console.error('Server error:', errorData);
+                throw new Error(errorData.detail || 'Failed to create trip');
             }
         } catch (error) {
             console.error('Error creating trip:', error);
-            alert('Error creating trip. Please try again.');
+            alert(`Error creating trip: ${error.message}. Please try again.`);
         }
     }
 
