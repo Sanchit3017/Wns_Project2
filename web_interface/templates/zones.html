@@ -1,477 +1,572 @@
 {% extends "base.html" %}
 
-{% block title %}Bangalore Zones - WNS Transport{% endblock %}
+{% block title %}Bangalore Transport Zones - WNS{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <h1 class="h3 mb-0">
-            <i class="fas fa-map-marked-alt text-primary me-2"></i>
-            Bangalore Transport Zones
-        </h1>
-        <p class="text-muted mt-2">WNS Vuram coverage areas based on official transport policy</p>
+<!-- Header Section -->
+<div class="mb-8">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Transport Coverage Zones</h1>
+            <p class="text-gray-600 mt-1">WNS Bangalore transport coverage areas and hiring zones</p>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button id="toggle-view" class="bg-wns-blue hover:bg-wns-light-blue text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-th-large mr-2"></i>Grid View
+            </button>
+            <button id="search-zones" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-search mr-2"></i>Search
+            </button>
+        </div>
     </div>
 </div>
 
-<!-- Zone Overview -->
-<div class="row mb-4">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-map me-2"></i>
-                    Interactive Zone Map
-                </h5>
+<!-- Search and Filter Section -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8" id="search-section" style="display: none;">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+            <label for="search-input" class="block text-sm font-medium text-gray-700 mb-2">Search Areas</label>
+            <input type="text" id="search-input" placeholder="Type area name..." 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-wns-blue focus:border-transparent">
+        </div>
+        <div>
+            <label for="zone-filter" class="block text-sm font-medium text-gray-700 mb-2">Filter by Zone</label>
+            <select id="zone-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-wns-blue focus:border-transparent">
+                <option value="">All Zones</option>
+                <option value="Hiring">Hiring Zone</option>
+                <option value="Non_Hiring">Non-Hiring Zone</option>
+            </select>
+        </div>
+        <div class="flex items-end">
+            <button id="clear-search" class="w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-times mr-2"></i>Clear
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Zone Statistics -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-700">Total Zones</h3>
+                <p class="text-3xl font-bold text-green-600" id="total-zones">13</p>
+                <p class="text-sm text-gray-500 mt-1">Coverage areas</p>
             </div>
-            <div class="card-body p-0">
-                <div id="zones-map" style="height: 500px;"></div>
+            <div class="bg-green-100 p-3 rounded-full">
+                <i class="fas fa-map-marked-alt text-green-600 text-xl"></i>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Zone Information
-                </h5>
+
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-700">Hiring Zones</h3>
+                <p class="text-3xl font-bold text-blue-600" id="hiring-zones">12</p>
+                <p class="text-sm text-gray-500 mt-1">Active hiring</p>
             </div>
-            <div class="card-body">
-                <div id="zone-details">
-                    <p class="text-muted">Click on a zone to view details</p>
-                </div>
+            <div class="bg-blue-100 p-3 rounded-full">
+                <i class="fas fa-check-circle text-blue-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-700">Non-Hiring</h3>
+                <p class="text-3xl font-bold text-red-600" id="non-hiring-zones">1</p>
+                <p class="text-sm text-gray-500 mt-1">Restricted areas</p>
+            </div>
+            <div class="bg-red-100 p-3 rounded-full">
+                <i class="fas fa-times-circle text-red-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-700">Coverage Areas</h3>
+                <p class="text-3xl font-bold text-purple-600" id="total-areas">180+</p>
+                <p class="text-sm text-gray-500 mt-1">Pickup locations</p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-full">
+                <i class="fas fa-location-dot text-purple-600 text-xl"></i>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Zone Grid -->
-<div class="row mb-4">
-    {% for zone_name, zone_data in zones.items() %}
-        {% if zone_name != 'Non_Hiring' %}
-        <div class="col-lg-6 mb-4">
-            <div class="card zone-card h-100" onclick="selectZone('{{ zone_name }}')">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <span class="zone-badge zone-{{ zone_name.lower() }}">{{ zone_name }}</span>
-                        Zone
-                    </h5>
-                    <span class="badge bg-secondary">{{ zone_data.areas|length }} Areas</span>
+<div id="zones-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Hiring Zones -->
+    <div class="bg-white rounded-xl shadow-lg border-l-4 border-green-500 hover:shadow-xl transition duration-300 zone-card" data-zone="Hiring">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-900">North Zone</h3>
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    <i class="fas fa-check-circle mr-1"></i>Hiring
+                </span>
+            </div>
+            <div class="space-y-2 mb-4">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Areas Covered:</span>
+                    <span class="font-medium">15 locations</span>
                 </div>
-                <div class="card-body">
-                    <h6 class="text-muted">Coverage Description</h6>
-                    <p class="mb-3">{{ zone_data.coverage }}</p>
-                    
-                    <h6 class="text-muted">Key Areas</h6>
-                    <div class="row">
-                        {% for area in zone_data.areas[:6] %}
-                        <div class="col-6 mb-1">
-                            <small class="text-primary">• {{ area }}</small>
-                        </div>
-                        {% endfor %}
-                        {% if zone_data.areas|length > 6 %}
-                        <div class="col-12">
-                            <small class="text-muted">+ {{ zone_data.areas|length - 6 }} more areas</small>
-                        </div>
-                        {% endif %}
-                    </div>
-                    
-                    <hr>
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <i class="fas fa-car text-primary"></i>
-                            <div class="mt-1">
-                                <small class="text-muted">Active Trips</small>
-                                <div><strong>{{ (loop.index % 6) + 1 }}</strong></div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <i class="fas fa-users text-success"></i>
-                            <div class="mt-1">
-                                <small class="text-muted">Drivers</small>
-                                <div><strong>{{ (loop.index % 4) + 1 }}</strong></div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <i class="fas fa-clock text-warning"></i>
-                            <div class="mt-1">
-                                <small class="text-muted">Avg ETA</small>
-                                <div><strong>{{ 20 + (loop.index % 3) * 10 }}m</strong></div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Distance Range:</span>
+                    <span class="font-medium">5-20 km</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Travel Time:</span>
+                    <span class="font-medium">30-60 mins</span>
                 </div>
             </div>
-        </div>
-        {% endif %}
-    {% endfor %}
-</div>
-
-<!-- WNS Office Information -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-building me-2"></i>
-                    WNS Office Location
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h6>{{ office.name }}</h6>
-                        <p class="mb-2">
-                            <i class="fas fa-map-pin text-primary me-2"></i>
-                            {{ office.address }}
-                        </p>
-                        <p class="mb-2">
-                            <i class="fas fa-landmark text-secondary me-2"></i>
-                            Near {{ office.landmark }}
-                        </p>
-                        <p class="mb-0">
-                            <i class="fas fa-layer-group text-info me-2"></i>
-                            Located in <span class="zone-badge zone-{{ office.zone.lower() }}">{{ office.zone }}</span> Zone
-                        </p>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="row text-center">
-                            <div class="col-4">
-                                <div class="mb-2">
-                                    <i class="fas fa-route text-primary fa-lg"></i>
-                                    <h6 class="mt-1">30 km</h6>
-                                    <small class="text-muted">Max Coverage</small>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="mb-2">
-                                    <i class="fas fa-clock text-success fa-lg"></i>
-                                    <h6 class="mt-1">150 min</h6>
-                                    <small class="text-muted">Max Travel Time</small>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="mb-2">
-                                    <i class="fas fa-users text-warning fa-lg"></i>
-                                    <h6 class="mt-1">{{ zones|length - 1 }}</h6>
-                                    <small class="text-muted">Service Zones</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="mb-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Key Areas:</h4>
+                <div class="flex flex-wrap gap-1">
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">Hebbal</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">Yelahanka</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">RT Nagar</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">+12 more</span>
                 </div>
             </div>
+            <button class="w-full bg-wns-blue hover:bg-wns-light-blue text-white py-2 rounded-lg transition duration-200" onclick="viewZoneDetails('North')">
+                <i class="fas fa-eye mr-2"></i>View Details
+            </button>
         </div>
     </div>
-</div>
 
-<!-- Policy Guidelines -->
-<div class="row mb-4">
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-file-alt me-2"></i>
-                    Transport Policy - Bangalore
-                </h5>
+    <div class="bg-white rounded-xl shadow-lg border-l-4 border-green-500 hover:shadow-xl transition duration-300 zone-card" data-zone="Hiring">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-900">South Zone</h3>
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    <i class="fas fa-check-circle mr-1"></i>Hiring
+                </span>
             </div>
-            <div class="card-body">
-                <ul class="list-unstyled">
-                    <li class="mb-2">
-                        <i class="fas fa-clock text-primary me-2"></i>
-                        <strong>Sociable Hours:</strong> 06:30 - 20:30 (All employees)
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-moon text-secondary me-2"></i>
-                        <strong>Unsociable Hours:</strong> 20:30 - 06:30 (All employees)
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-stopwatch text-success me-2"></i>
-                        <strong>ETA Buffer:</strong> 15 min before login, 20 min after logout
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-route text-warning me-2"></i>
-                        <strong>Travel Time:</strong> Based on distance and traffic conditions
-                    </li>
-                    <li class="mb-0">
-                        <i class="fas fa-shield-alt text-info me-2"></i>
-                        <strong>Assignment:</strong> Zone-based driver optimization
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-chart-line me-2"></i>
-                    Travel Time Matrix
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Distance</th>
-                                <th>Time Range</th>
-                                <th>Traffic Factor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>0-10 km</td>
-                                <td>0-60 min</td>
-                                <td><span class="badge bg-success">Low</span></td>
-                            </tr>
-                            <tr>
-                                <td>11-20 km</td>
-                                <td>60-90 min</td>
-                                <td><span class="badge bg-warning">Medium</span></td>
-                            </tr>
-                            <tr>
-                                <td>21-30 km</td>
-                                <td>90-120 min</td>
-                                <td><span class="badge bg-orange">High</span></td>
-                            </tr>
-                            <tr>
-                                <td>30+ km</td>
-                                <td>120-150 min</td>
-                                <td><span class="badge bg-danger">Very High</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="space-y-2 mb-4">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Areas Covered:</span>
+                    <span class="font-medium">18 locations</span>
                 </div>
-                <small class="text-muted">* Times based on normal traffic conditions</small>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Distance Range:</span>
+                    <span class="font-medium">8-25 km</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Travel Time:</span>
+                    <span class="font-medium">35-70 mins</span>
+                </div>
             </div>
+            <div class="mb-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Key Areas:</h4>
+                <div class="flex flex-wrap gap-1">
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">Banashankari</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">Jayanagar</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">BTM Layout</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">+15 more</span>
+                </div>
+            </div>
+            <button class="w-full bg-wns-blue hover:bg-wns-light-blue text-white py-2 rounded-lg transition duration-200" onclick="viewZoneDetails('South')">
+                <i class="fas fa-eye mr-2"></i>View Details
+            </button>
         </div>
     </div>
-</div>
 
-<!-- Non-Hiring Zones -->
-{% if zones.Non_Hiring %}
-<div class="row">
-    <div class="col-12">
-        <div class="card border-danger">
-            <div class="card-header bg-danger text-white">
-                <h5 class="mb-0">
-                    <i class="fas fa-ban me-2"></i>
-                    Restricted Areas (Non-Hiring Zones)
-                </h5>
+    <div class="bg-white rounded-xl shadow-lg border-l-4 border-green-500 hover:shadow-xl transition duration-300 zone-card" data-zone="Hiring">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-900">East Zone</h3>
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    <i class="fas fa-check-circle mr-1"></i>Hiring
+                </span>
             </div>
-            <div class="card-body">
-                <p class="text-danger mb-3">
-                    <strong>Important:</strong> These areas are not covered by WNS transport services due to policy restrictions.
+            <div class="space-y-2 mb-4">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Areas Covered:</span>
+                    <span class="font-medium">20 locations</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Distance Range:</span>
+                    <span class="font-medium">3-15 km</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Travel Time:</span>
+                    <span class="font-medium">15-45 mins</span>
+                </div>
+            </div>
+            <div class="mb-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Key Areas:</h4>
+                <div class="flex flex-wrap gap-1">
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">Whitefield</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">Marathahalli</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">Varthur</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">+17 more</span>
+                </div>
+            </div>
+            <button class="w-full bg-wns-blue hover:bg-wns-light-blue text-white py-2 rounded-lg transition duration-200" onclick="viewZoneDetails('East')">
+                <i class="fas fa-eye mr-2"></i>View Details
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border-l-4 border-green-500 hover:shadow-xl transition duration-300 zone-card" data-zone="Hiring">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-900">West Zone</h3>
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    <i class="fas fa-check-circle mr-1"></i>Hiring
+                </span>
+            </div>
+            <div class="space-y-2 mb-4">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Areas Covered:</span>
+                    <span class="font-medium">16 locations</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Distance Range:</span>
+                    <span class="font-medium">10-30 km</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Travel Time:</span>
+                    <span class="font-medium">40-80 mins</span>
+                </div>
+            </div>
+            <div class="mb-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Key Areas:</h4>
+                <div class="flex flex-wrap gap-1">
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">Rajajinagar</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">Vijayanagar</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">Malleshwaram</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">+13 more</span>
+                </div>
+            </div>
+            <button class="w-full bg-wns-blue hover:bg-wns-light-blue text-white py-2 rounded-lg transition duration-200" onclick="viewZoneDetails('West')">
+                <i class="fas fa-eye mr-2"></i>View Details
+            </button>
+        </div>
+    </div>
+
+    <!-- Non-Hiring Zone -->
+    <div class="bg-white rounded-xl shadow-lg border-l-4 border-red-500 hover:shadow-xl transition duration-300 zone-card" data-zone="Non_Hiring">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-900">Non-Hiring Zone</h3>
+                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                    <i class="fas fa-times-circle mr-1"></i>Restricted
+                </span>
+            </div>
+            <div class="space-y-2 mb-4">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Areas Covered:</span>
+                    <span class="font-medium">Remote locations</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Distance Range:</span>
+                    <span class="font-medium">30+ km</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Reason:</span>
+                    <span class="font-medium">Too far/costly</span>
+                </div>
+            </div>
+            <div class="mb-4 p-3 bg-red-50 rounded-lg">
+                <p class="text-sm text-red-700">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Transport not available from these areas due to distance or cost constraints.
                 </p>
-                <div class="row">
-                    {% for area in zones.Non_Hiring.areas %}
-                    <div class="col-md-4 mb-2">
-                        <span class="badge bg-danger">{{ area }}</span>
-                    </div>
-                    {% endfor %}
+            </div>
+            <button class="w-full bg-gray-400 text-white py-2 rounded-lg cursor-not-allowed" disabled>
+                <i class="fas fa-ban mr-2"></i>No Transport Available
+            </button>
+        </div>
+    </div>
+
+    <!-- Add more zones as needed -->
+    <div class="bg-white rounded-xl shadow-lg border-l-4 border-green-500 hover:shadow-xl transition duration-300 zone-card" data-zone="Hiring">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-900">Central Zone</h3>
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    <i class="fas fa-check-circle mr-1"></i>Hiring
+                </span>
+            </div>
+            <div class="space-y-2 mb-4">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Areas Covered:</span>
+                    <span class="font-medium">12 locations</span>
                 </div>
-                <hr>
-                <small class="text-muted">
-                    Services are not extended to village zones, non-motorable areas, or locations lacking basic street lighting and police patrolling.
-                </small>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Distance Range:</span>
+                    <span class="font-medium">5-18 km</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Travel Time:</span>
+                    <span class="font-medium">25-50 mins</span>
+                </div>
+            </div>
+            <div class="mb-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Key Areas:</h4>
+                <div class="flex flex-wrap gap-1">
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">MG Road</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">Brigade Road</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">Cubbon Park</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">+9 more</span>
+                </div>
+            </div>
+            <button class="w-full bg-wns-blue hover:bg-wns-light-blue text-white py-2 rounded-lg transition duration-200" onclick="viewZoneDetails('Central')">
+                <i class="fas fa-eye mr-2"></i>View Details
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Zone Details Modal -->
+<div id="zone-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-gray-900" id="modal-zone-title">Zone Details</h2>
+                    <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6" id="modal-content">
+                <!-- Dynamic content will be loaded here -->
             </div>
         </div>
     </div>
 </div>
-{% endif %}
-{% endblock %}
 
-{% block extra_js %}
 <script>
-let zonesMap;
-let zonePolygons = {};
+// Zones Page JavaScript
+class ZonesManager {
+    constructor() {
+        this.initializeComponents();
+        this.loadZoneData();
+    }
 
-document.addEventListener('DOMContentLoaded', function() {
-    initializeZonesMap();
-});
+    initializeComponents() {
+        // Toggle view button
+        document.getElementById('toggle-view')?.addEventListener('click', () => {
+            this.toggleView();
+        });
 
-function initializeZonesMap() {
-    // Center on Bangalore
-    zonesMap = L.map('zones-map').setView([12.9716, 77.5946], 11);
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(zonesMap);
-    
-    // Add WNS office marker
-    const officeIcon = L.divIcon({
-        html: '<i class="fas fa-building text-primary fa-lg"></i>',
-        iconSize: [25, 25],
-        className: 'custom-div-icon'
-    });
-    
-    L.marker([{{ office.coordinates.lat }}, {{ office.coordinates.lng }}], {icon: officeIcon})
-        .addTo(zonesMap)
-        .bindPopup('<b>{{ office.name }}</b><br>{{ office.address }}<br>Main Office Location')
-        .openPopup();
-    
-    // Zone colors and approximate coordinates
-    const zoneConfig = {
-        'East': {
-            color: '#3b82f6',
-            coords: [
-                [12.9698, 77.7500], // Whitefield
-                [13.1056, 77.5945], // Yelahanka
-                [13.0417, 77.7500], // Hoskote area
-                [12.9400, 77.8000], // Varthur area
-                [12.9200, 77.7200]  // Bellandur area
-            ]
-        },
-        'West': {
-            color: '#f59e0b',
-            coords: [
-                [12.9716, 77.5946], // Central Bangalore
-                [12.9000, 77.4500], // Kengeri area
-                [13.0000, 77.4800], // Nagarbhavi area
-                [12.9500, 77.5200], // Rajajinagar area
-                [12.9800, 77.5000]  // Malleswaram area
-            ]
-        },
-        'North': {
-            color: '#10b981',
-            coords: [
-                [13.0500, 77.5500], // Hebbal
-                [13.1000, 77.5000], // Yelahanka North
-                [13.0800, 77.6000], // Banaswadi area
-                [13.0200, 77.5800], // RT Nagar area
-                [13.0000, 77.5500]  // Sadashivanagar area
-            ]
-        },
-        'South': {
-            color: '#ef4444',
-            coords: [
-                [12.8500, 77.6500], // Electronic City
-                [12.9000, 77.6000], // JP Nagar
-                [12.8800, 77.5800], // Banashankari area
-                [12.9200, 77.5500], // Jayanagar area
-                [12.9300, 77.6200]  // Koramangala area
-            ]
-        },
-        'Central': {
-            color: '#8b5cf6',
-            coords: [
-                [12.9716, 77.5946], // City center
-                [13.0000, 77.6200], // Banaswadi
-                [12.9500, 77.6300], // Indiranagar
-                [12.9800, 77.6000], // Hebbal Road
-                [12.9600, 77.5700]  // Cunningham Road
-            ]
-        }
-    };
-    
-    // Add zone polygons
-    {% for zone_name, zone_data in zones.items() %}
-        {% if zone_name != 'Non_Hiring' %}
-        if (zoneConfig['{{ zone_name }}']) {
-            const config = zoneConfig['{{ zone_name }}'];
-            const polygon = L.polygon(config.coords, {
-                color: config.color,
-                fillColor: config.color,
-                fillOpacity: 0.2,
-                weight: 2
-            }).addTo(zonesMap);
-            
-            polygon.bindPopup(`
-                <b>{{ zone_name }} Zone</b><br>
-                Areas: {{ zone_data.areas|length }}<br>
-                Coverage: {{ zone_data.coverage }}
-            `);
-            
-            polygon.on('click', function() {
-                selectZone('{{ zone_name }}');
-            });
-            
-            zonePolygons['{{ zone_name }}'] = polygon;
-        }
-        {% endif %}
-    {% endfor %}
-}
+        // Search button
+        document.getElementById('search-zones')?.addEventListener('click', () => {
+            this.toggleSearch();
+        });
 
-function selectZone(zoneName) {
-    const zoneData = {
-        {% for zone_name, zone_data in zones.items() %}
-            {% if zone_name != 'Non_Hiring' %}
-            '{{ zone_name }}': {
-                name: '{{ zone_name }}',
-                areas: {{ zone_data.areas|tojson }},
-                coverage: '{{ zone_data.coverage }}'
-            },
-            {% endif %}
-        {% endfor %}
-    };
-    
-    if (zoneData[zoneName]) {
-        const zone = zoneData[zoneName];
-        
-        document.getElementById('zone-details').innerHTML = `
-            <h6 class="mb-3">
-                <span class="zone-badge zone-${zoneName.toLowerCase()}">${zoneName}</span>
-                Zone Details
-            </h6>
-            
-            <div class="mb-3">
-                <strong>Coverage Type:</strong><br>
-                <span class="text-muted">${zone.coverage}</span>
-            </div>
-            
-            <div class="mb-3">
-                <strong>Total Areas:</strong> <span class="badge bg-secondary">${zone.areas.length}</span>
-            </div>
-            
-            <div class="mb-3">
-                <strong>Key Locations:</strong>
-                <div class="mt-2">
-                    ${zone.areas.map(area => `<span class="badge bg-light text-dark me-1 mb-1">${area}</span>`).join('')}
-                </div>
-            </div>
-            
-            <div class="d-grid gap-2 mt-3">
-                <button class="btn btn-outline-primary btn-sm" onclick="viewTripsInZone('${zoneName}')">
-                    <i class="fas fa-car me-2"></i>View Active Trips
-                </button>
-                <button class="btn btn-outline-success btn-sm" onclick="viewDriversInZone('${zoneName}')">
-                    <i class="fas fa-users me-2"></i>View Available Drivers
-                </button>
-            </div>
-        `;
-        
-        // Highlight the zone on map
-        Object.keys(zonePolygons).forEach(key => {
-            if (key === zoneName) {
-                zonePolygons[key].setStyle({weight: 4, opacity: 1});
-            } else {
-                zonePolygons[key].setStyle({weight: 2, opacity: 0.7});
+        // Search functionality
+        document.getElementById('search-input')?.addEventListener('input', (e) => {
+            this.filterZones(e.target.value);
+        });
+
+        // Zone filter
+        document.getElementById('zone-filter')?.addEventListener('change', (e) => {
+            this.filterByZoneType(e.target.value);
+        });
+
+        // Clear search
+        document.getElementById('clear-search')?.addEventListener('click', () => {
+            this.clearSearch();
+        });
+
+        // Modal controls
+        document.getElementById('close-modal')?.addEventListener('click', () => {
+            this.closeModal();
+        });
+
+        // Close modal on outside click
+        document.getElementById('zone-modal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'zone-modal') {
+                this.closeModal();
             }
         });
+    }
+
+    toggleView() {
+        const container = document.getElementById('zones-container');
+        const button = document.getElementById('toggle-view');
         
-        // Zoom to zone
-        if (zonePolygons[zoneName]) {
-            zonesMap.fitBounds(zonePolygons[zoneName].getBounds(), {padding: [20, 20]});
+        if (container.classList.contains('grid-cols-3')) {
+            container.classList.remove('lg:grid-cols-3');
+            container.classList.add('lg:grid-cols-2');
+            button.innerHTML = '<i class="fas fa-th mr-2"></i>Compact View';
+        } else {
+            container.classList.remove('lg:grid-cols-2');
+            container.classList.add('lg:grid-cols-3');
+            button.innerHTML = '<i class="fas fa-th-large mr-2"></i>Grid View';
+        }
+    }
+
+    toggleSearch() {
+        const searchSection = document.getElementById('search-section');
+        if (searchSection.style.display === 'none') {
+            searchSection.style.display = 'block';
+        } else {
+            searchSection.style.display = 'none';
+        }
+    }
+
+    filterZones(searchTerm) {
+        const zoneCards = document.querySelectorAll('.zone-card');
+        const term = searchTerm.toLowerCase();
+
+        zoneCards.forEach(card => {
+            const zoneName = card.querySelector('h3').textContent.toLowerCase();
+            const areas = Array.from(card.querySelectorAll('.flex-wrap span')).map(span => span.textContent.toLowerCase());
+            
+            const matches = zoneName.includes(term) || areas.some(area => area.includes(term));
+            card.style.display = matches ? 'block' : 'none';
+        });
+    }
+
+    filterByZoneType(zoneType) {
+        const zoneCards = document.querySelectorAll('.zone-card');
+
+        zoneCards.forEach(card => {
+            if (!zoneType || card.dataset.zone === zoneType) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    clearSearch() {
+        document.getElementById('search-input').value = '';
+        document.getElementById('zone-filter').value = '';
+        
+        const zoneCards = document.querySelectorAll('.zone-card');
+        zoneCards.forEach(card => {
+            card.style.display = 'block';
+        });
+    }
+
+    closeModal() {
+        document.getElementById('zone-modal').classList.add('hidden');
+    }
+
+    async loadZoneData() {
+        try {
+            // Load dynamic zone data from API
+            const response = await fetch('/api/zones');
+            if (response.ok) {
+                const data = await response.json();
+                this.updateStatistics(data);
+            }
+        } catch (error) {
+            console.error('Error loading zone data:', error);
+        }
+    }
+
+    updateStatistics(data) {
+        // Update zone statistics
+        if (data.zones) {
+            const totalZones = Object.keys(data.zones).length;
+            const hiringZones = Object.keys(data.zones).filter(zone => zone !== 'Non_Hiring').length;
+            const nonHiringZones = totalZones - hiringZones;
+            
+            document.getElementById('total-zones').textContent = totalZones;
+            document.getElementById('hiring-zones').textContent = hiringZones;
+            document.getElementById('non-hiring-zones').textContent = nonHiringZones;
+            
+            // Calculate total areas
+            let totalAreas = 0;
+            Object.values(data.zones).forEach(zone => {
+                if (zone.areas) {
+                    totalAreas += zone.areas.length;
+                }
+            });
+            document.getElementById('total-areas').textContent = totalAreas + '+';
         }
     }
 }
 
-function viewTripsInZone(zoneName) {
-    showNotification(`Loading active trips in ${zoneName} zone...`, 'info');
-    // In real implementation, this would fetch and display trips
+// Global functions
+function viewZoneDetails(zoneName) {
+    const modal = document.getElementById('zone-modal');
+    const title = document.getElementById('modal-zone-title');
+    const content = document.getElementById('modal-content');
+    
+    title.textContent = `${zoneName} Zone Details`;
+    
+    // Sample detailed content
+    content.innerHTML = `
+        <div class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-900 mb-2">Coverage Statistics</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Total Areas:</span>
+                            <span class="font-medium">15-20 locations</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Distance Range:</span>
+                            <span class="font-medium">5-25 km</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Avg Travel Time:</span>
+                            <span class="font-medium">30-60 minutes</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-900 mb-2">Service Info</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Status:</span>
+                            <span class="font-medium text-green-600">Active</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Peak Hours:</span>
+                            <span class="font-medium">8-10 AM, 6-8 PM</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Available Vehicles:</span>
+                            <span class="font-medium">15-20 vehicles</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-semibold text-gray-900 mb-3">All Coverage Areas</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    <!-- Sample areas - in real implementation, this would be dynamic -->
+                    <span class="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm">Area 1</span>
+                    <span class="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm">Area 2</span>
+                    <span class="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm">Area 3</span>
+                    <!-- More areas would be loaded dynamically -->
+                </div>
+            </div>
+            
+            <div class="flex space-x-4">
+                <button class="flex-1 bg-wns-blue hover:bg-wns-light-blue text-white py-2 px-4 rounded-lg transition duration-200">
+                    <i class="fas fa-plus mr-2"></i>Create Trip from ${zoneName}
+                </button>
+                <button class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition duration-200">
+                    <i class="fas fa-map mr-2"></i>View on Map
+                </button>
+            </div>
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
 }
 
-function viewDriversInZone(zoneName) {
-    showNotification(`Loading available drivers in ${zoneName} zone...`, 'info');
-    // In real implementation, this would fetch and display drivers
-}
-
-// Auto-select East zone (where office is located)
-setTimeout(() => {
-    selectZone('East');
-}, 1000);
+// Initialize zones manager when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new ZonesManager();
+});
 </script>
 {% endblock %}

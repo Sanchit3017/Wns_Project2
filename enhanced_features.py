@@ -77,7 +77,8 @@ TRAVEL_TIME_MATRIX = {
 
 class BangaloreTransportEnhancer:
     def __init__(self):
-        self.base_url = "http://localhost:8000"
+        import os
+        self.base_url = os.getenv("API_GATEWAY_URL", "http://api-gateway:8000")
         self.routes_cache = {}
         
     def calculate_distance(self, lat1: float, lng1: float, lat2: float, lng2: float) -> float:

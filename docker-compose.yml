@@ -106,10 +106,17 @@ services:
     build:
       context: .
       dockerfile: web_interface/Dockerfile
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8001
+      API_GATEWAY_URL: http://api-gateway:8000
+      USER_SERVICE_URL: http://user-service:8002
+      TRIP_SERVICE_URL: http://trip-service:8003
+      NOTIFICATION_SERVICE_URL: http://notification-service:8004
     ports:
       - "5001:5000"
     depends_on:
       - api-gateway
+      - auth-service
     networks:
       - travel_network
 

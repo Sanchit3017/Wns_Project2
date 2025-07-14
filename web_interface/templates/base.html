@@ -3,115 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}WNS Bangalore Transport Management{% endblock %}</title>
+    <title>{% block title %}WNS Transport Management{% endblock %}</title>
     
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'wns-blue': '#003f7f',
+                        'wns-light-blue': '#0066cc',
+                        'wns-gray': '#f8f9fa',
+                        'wns-secondary': '#f59e0b',
+                        'wns-success': '#10b981',
+                        'wns-danger': '#ef4444'
+                    }
+                }
+            }
+        }
+    </script>
+    
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Leaflet CSS for maps -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
-        :root {
-            --wns-primary: #1e3a8a;
-            --wns-secondary: #f59e0b;
-            --wns-success: #10b981;
-            --wns-danger: #ef4444;
-            --wns-light: #f8fafc;
-        }
-        
-        body {
-            background-color: var(--wns-light);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .navbar-brand {
-            font-weight: bold;
-            color: var(--wns-primary) !important;
-        }
-        
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, var(--wns-primary), #3b82f6);
-            color: white;
-        }
-        
-        .zone-card {
-            border-left: 4px solid var(--wns-secondary);
-        }
-        
-        .btn-wns {
-            background-color: var(--wns-primary);
-            border-color: var(--wns-primary);
-            color: white;
-        }
-        
-        .btn-wns:hover {
-            background-color: #1e40af;
-            border-color: #1e40af;
-            color: white;
-        }
-        
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        
-        .status-active { background-color: var(--wns-success); }
-        .status-inactive { background-color: var(--wns-danger); }
-        .status-pending { background-color: var(--wns-secondary); }
-        
         .map-container {
             height: 400px;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        
-        .timeline {
-            position: relative;
-            padding-left: 30px;
-        }
-        
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 15px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: var(--wns-primary);
-        }
-        
-        .timeline-item {
-            position: relative;
-            padding: 10px 0;
-        }
-        
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -22px;
-            top: 15px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--wns-secondary);
-            border: 3px solid white;
-            box-shadow: 0 0 0 2px var(--wns-primary);
         }
         
         .live-update {
@@ -123,99 +43,303 @@
             50% { opacity: 0.7; }
             100% { opacity: 1; }
         }
-        
-        .zone-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-        
-        .zone-east { background-color: #dbeafe; color: var(--wns-primary); }
-        .zone-west { background-color: #fef3c7; color: #92400e; }
-        .zone-north { background-color: #dcfce7; color: #166534; }
-        .zone-south { background-color: #fce7f3; color: #be185d; }
-        .zone-central { background-color: #e0e7ff; color: #3730a3; }
     </style>
     
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="fas fa-route me-2"></i>
-                WNS Transport Management
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/zones"><i class="fas fa-map-marked-alt me-1"></i>Zones</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/trips/create"><i class="fas fa-plus-circle me-1"></i>Create Trip</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/tracking"><i class="fas fa-location-arrow me-1"></i>Live Tracking</a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-building me-1"></i>WNS Vuram
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><h6 class="dropdown-header">Office Location</h6></li>
-                            <li><span class="dropdown-item-text">Whitefield, Bangalore</span></li>
-                            <li><span class="dropdown-item-text">ITPL Main Road</span></li>
-                        </ul>
-                    </li>
-                </ul>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo and Brand -->
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-2">
+                        <div class="h-10 w-10 bg-wns-blue rounded-lg flex items-center justify-center">
+                            <i class="fas fa-route text-white text-lg"></i>
+                        </div>
+                        <span class="text-xl font-bold text-gray-900">WNS Transport</span>
+                    </a>
+                </div>
+
+                <!-- Navigation Links (Desktop) -->
+                <div class="hidden md:flex items-center space-x-8" id="main-nav">
+                    <!-- Will be populated by JavaScript based on user role -->
+                </div>
+
+                <!-- User Menu -->
+                <div class="flex items-center space-x-4">
+                    <!-- Notifications -->
+                    <button class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition duration-150">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                    </button>
+
+                    <!-- User Profile Dropdown -->
+                    <div class="relative" id="user-menu">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Mobile menu button -->
+                    <button class="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md" id="mobile-menu-btn">
+                        <i class="fas fa-bars text-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div class="md:hidden hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 border-t border-gray-200">
+                <!-- Will be populated by JavaScript -->
             </div>
         </div>
     </nav>
 
-    <main class="container-fluid py-4">
-        {% block content %}{% endblock %}
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Alert Container -->
+        <div id="alert-container" class="mb-4"></div>
+
+        {% block content %}
+        <!-- Default content if no specific template extends this -->
+        <div class="text-center py-12">
+            <div class="h-16 w-16 bg-wns-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-route text-white text-2xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">{% if title %}{{ title }}{% else %}WNS Transport Management{% endif %}</h1>
+            <p class="text-gray-600">{% if message %}{{ message }}{% else %}Welcome to WNS Transport Management System{% endif %}</p>
+        </div>
+        {% endblock %}
     </main>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-auto">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <div class="text-sm text-gray-500">
+                    © 2024 WNS Transport Management. All rights reserved.
+                </div>
+                <div class="flex space-x-4">
+                    <span class="text-sm text-gray-500">Bangalore Operations</span>
+                    <span class="text-sm text-gray-500">|</span>
+                    <span class="text-sm text-gray-500">Version 2.0</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
-        // Global functions for real-time updates
-        function updateStatus(elementId, status) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.className = `status-indicator status-${status}`;
+        // Authentication and Navigation Management
+        class AuthManager {
+            constructor() {
+                this.token = localStorage.getItem('access_token');
+                this.user = this.getUser();
+                this.init();
+            }
+
+            getUser() {
+                const userStr = localStorage.getItem('user_info');
+                return userStr ? JSON.parse(userStr) : null;
+            }
+
+            isAuthenticated() {
+                return this.token && this.user;
+            }
+
+            logout() {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user_info');
+                window.location.href = '/login';
+            }
+
+            init() {
+                this.setupNavigation();
+                this.setupUserMenu();
+                this.setupMobileMenu();
+            }
+
+            setupNavigation() {
+                const mainNav = document.getElementById('main-nav');
+                const mobileMenu = document.getElementById('mobile-menu').querySelector('div');
+                
+                if (!this.isAuthenticated()) {
+                    // Redirect to login if not authenticated and not on login/signup page
+                    if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/signup')) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    return;
+                }
+
+                const navItems = this.getNavigationItems();
+                
+                // Desktop navigation
+                mainNav.innerHTML = navItems.map(item => `
+                    <a href="${item.href}" class="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium ${
+                        window.location.pathname === item.href 
+                            ? 'bg-wns-blue text-white' 
+                            : 'text-gray-700 hover:text-wns-blue hover:bg-gray-100'
+                    } transition duration-150">
+                        <i class="${item.icon}"></i>
+                        <span>${item.label}</span>
+                    </a>
+                `).join('');
+
+                // Mobile navigation
+                mobileMenu.innerHTML = navItems.map(item => `
+                    <a href="${item.href}" class="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium ${
+                        window.location.pathname === item.href 
+                            ? 'bg-wns-blue text-white' 
+                            : 'text-gray-700 hover:text-wns-blue hover:bg-gray-100'
+                    } transition duration-150">
+                        <i class="${item.icon}"></i>
+                        <span>${item.label}</span>
+                    </a>
+                `).join('');
+            }
+
+            getNavigationItems() {
+                const role = this.user?.role;
+                
+                const commonItems = [
+                    { href: '/', icon: 'fas fa-tachometer-alt', label: 'Dashboard' }
+                ];
+
+                const roleItems = {
+                    admin: [
+                        { href: '/admin/dashboard', icon: 'fas fa-tachometer-alt', label: 'Admin Dashboard' },
+                        { href: '/zones', icon: 'fas fa-map-marked-alt', label: 'Zones' },
+                        { href: '/trips/create', icon: 'fas fa-plus-circle', label: 'Create Trip' },
+                        { href: '/tracking', icon: 'fas fa-location-arrow', label: 'Live Tracking' }
+                    ],
+                    driver: [
+                        { href: '/driver/dashboard', icon: 'fas fa-tachometer-alt', label: 'My Dashboard' },
+                        { href: '/tracking', icon: 'fas fa-location-arrow', label: 'Live Tracking' }
+                    ],
+                    employee: [
+                        { href: '/employee/dashboard', icon: 'fas fa-tachometer-alt', label: 'My Dashboard' },
+                        { href: '/trips/create', icon: 'fas fa-plus-circle', label: 'Request Trip' }
+                    ]
+                };
+
+                return role === 'admin' ? roleItems.admin : (roleItems[role] || commonItems);
+            }
+
+            setupUserMenu() {
+                const userMenu = document.getElementById('user-menu');
+                
+                if (!this.isAuthenticated()) {
+                    userMenu.innerHTML = `
+                        <div class="flex space-x-2">
+                            <a href="/login" class="bg-wns-blue text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-wns-light-blue transition duration-150">
+                                Sign In
+                            </a>
+                            <a href="/signup" class="border border-wns-blue text-wns-blue px-4 py-2 rounded-md text-sm font-medium hover:bg-wns-blue hover:text-white transition duration-150">
+                                Sign Up
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                userMenu.innerHTML = `
+                    <div class="relative">
+                        <button class="flex items-center space-x-2 text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-wns-blue focus:ring-offset-2 p-2" id="user-menu-btn">
+                            <div class="h-8 w-8 bg-wns-blue rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm font-medium">${this.user.email.charAt(0).toUpperCase()}</span>
+                            </div>
+                            <span class="text-gray-700 font-medium">${this.user.email}</span>
+                            <i class="fas fa-chevron-down text-gray-400"></i>
+                        </button>
+                        <div class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50" id="user-dropdown">
+                            <div class="px-4 py-2 text-sm text-gray-900 border-b border-gray-200">
+                                <div class="font-medium">${this.user.email}</div>
+                                <div class="text-gray-500 capitalize">${this.user.role}</div>
+                            </div>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user mr-2"></i>Profile
+                            </a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-cog mr-2"></i>Settings
+                            </a>
+                            <button onclick="authManager.logout()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Sign out
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // Setup dropdown toggle
+                document.getElementById('user-menu-btn').addEventListener('click', function() {
+                    const dropdown = document.getElementById('user-dropdown');
+                    dropdown.classList.toggle('hidden');
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    const userMenuBtn = document.getElementById('user-menu-btn');
+                    const dropdown = document.getElementById('user-dropdown');
+                    if (userMenuBtn && dropdown && !userMenuBtn.contains(e.target) && !dropdown.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+            }
+
+            setupMobileMenu() {
+                const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+                const mobileMenu = document.getElementById('mobile-menu');
+                
+                if (mobileMenuBtn && mobileMenu) {
+                    mobileMenuBtn.addEventListener('click', function() {
+                        mobileMenu.classList.toggle('hidden');
+                    });
+                }
             }
         }
-        
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-            notification.style.cssText = 'top: 80px; right: 20px; z-index: 1050; min-width: 300px;';
-            notification.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.body.appendChild(notification);
+
+        // Utility functions
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alert-container');
+            const alertColors = {
+                success: 'bg-green-50 border-green-200 text-green-800',
+                error: 'bg-red-50 border-red-200 text-red-800',
+                warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+                info: 'bg-blue-50 border-blue-200 text-blue-800'
+            };
             
+            const alertHtml = `
+                <div class="border-l-4 p-4 mb-4 ${alertColors[type] || alertColors.info}">
+                    <div class="flex">
+                        <div class="ml-3">
+                            <p class="text-sm">${message}</p>
+                        </div>
+                        <div class="ml-auto pl-3">
+                            <button class="text-gray-400 hover:text-gray-600" onclick="this.closest('.border-l-4').remove()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            alertContainer.insertAdjacentHTML('beforeend', alertHtml);
+            
+            // Auto-remove after 5 seconds
             setTimeout(() => {
-                notification.remove();
+                const alerts = alertContainer.querySelectorAll('.border-l-4');
+                if (alerts.length > 0) {
+                    alerts[0].remove();
+                }
             }, 5000);
         }
-        
+
         // Auto-refresh dashboard stats every 30 seconds
         function startAutoRefresh() {
             setInterval(async () => {
@@ -228,7 +352,7 @@
                 }
             }, 30000);
         }
-        
+
         function updateDashboardStats(stats) {
             // Update stats in the UI
             const elements = {
@@ -244,9 +368,11 @@
                 }
             });
         }
-        
+
         // Initialize when page loads
+        let authManager;
         document.addEventListener('DOMContentLoaded', function() {
+            authManager = new AuthManager();
             startAutoRefresh();
         });
     </script>
