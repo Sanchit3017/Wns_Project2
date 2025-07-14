@@ -191,14 +191,39 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Show success message
-                    successMessage.textContent = 'Account created successfully! Redirecting to login...';
+                    let newEmployeeId = null;
+                    if (role === 'employee') {
+                        // Call user-service to create employee profile
+                        const empRes = await fetch('http://localhost:8002/users/employees', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-user-id': data.id || 0,
+                                'x-user-role': 'employee'
+                            },
+                            body: JSON.stringify({
+                                name: email.split('@')[0],
+                                phone_number: '',
+                                home_location: '',
+                                commute_schedule: ''
+                            })
+                        });
+                        if (empRes.ok) {
+                            const empData = await empRes.json();
+                            newEmployeeId = empData.employee_id || empData.employeeId || null;
+                        }
+                    }
+                    // Show success message with employee ID if available
+                    if (newEmployeeId) {
+                        successMessage.textContent = `Account created successfully! Your Employee ID is ${newEmployeeId}. Redirecting to login...`;
+                    } else {
+                        successMessage.textContent = 'Account created successfully! Redirecting to login...';
+                    }
                     successAlert.classList.remove('hidden');
-                    
-                    // Redirect to login after 2 seconds
+                    // Redirect to login after 3 seconds
                     setTimeout(() => {
                         window.location.href = '/login';
-                    }, 2000);
+                    }, 3000);
                 } else {
                     throw new Error(data.detail || 'Registration failed');
                 }

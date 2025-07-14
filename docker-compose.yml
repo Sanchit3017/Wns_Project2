@@ -3,13 +3,14 @@ services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_DB: travel_management
+      # POSTGRES_DB: travel_management
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
     networks:
       - travel_network
 
@@ -18,6 +19,7 @@ services:
     build:
       context: .
       dockerfile: auth-service/Dockerfile
+  
     environment:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/auth_service
       AUTH_SERVICE_PORT: 8001
@@ -33,15 +35,16 @@ services:
     build:
       context: .
       dockerfile: user-service/Dockerfile
+    depends_on:
+      - postgres
+      - auth-service  
     environment:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/user_service
       USER_SERVICE_PORT: 8002
       AUTH_SERVICE_URL: http://auth-service:8001
     ports:
       - "8002:8002"
-    depends_on:
-      - postgres
-      - auth-service
+    
     networks:
       - travel_network
 
@@ -50,6 +53,10 @@ services:
     build:
       context: .
       dockerfile: trip-service/Dockerfile
+    depends_on:
+      - postgres
+      - auth-service
+      - user-service  
     environment:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/trip_service
       TRIP_SERVICE_PORT: 8003
@@ -57,10 +64,7 @@ services:
       USER_SERVICE_URL: http://user-service:8002
     ports:
       - "8003:8003"
-    depends_on:
-      - postgres
-      - auth-service
-      - user-service
+    
     networks:
       - travel_network
 
@@ -69,15 +73,16 @@ services:
     build:
       context: .
       dockerfile: notification-service/Dockerfile
+    depends_on:
+      - postgres
+      - auth-service  
     environment:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/notification_service
       NOTIFICATION_SERVICE_PORT: 8004
       AUTH_SERVICE_URL: http://auth-service:8001
     ports:
       - "8004:8004"
-    depends_on:
-      - postgres
-      - auth-service
+    
     networks:
       - travel_network
 
@@ -86,6 +91,11 @@ services:
     build:
       context: .
       dockerfile: api-gateway/Dockerfile
+    depends_on:
+      - auth-service
+      - user-service
+      - trip-service
+      - notification-service  
     environment:
       API_GATEWAY_PORT: 8000
       AUTH_SERVICE_URL: http://auth-service:8001
@@ -94,11 +104,7 @@ services:
       NOTIFICATION_SERVICE_URL: http://notification-service:8004
     ports:
       - "8000:8000"
-    depends_on:
-      - auth-service
-      - user-service
-      - trip-service
-      - notification-service
+    
     networks:
       - travel_network
 
@@ -106,6 +112,9 @@ services:
     build:
       context: .
       dockerfile: web_interface/Dockerfile
+    depends_on:
+      - api-gateway
+      - auth-service  
     environment:
       AUTH_SERVICE_URL: http://auth-service:8001
       API_GATEWAY_URL: http://api-gateway:8000
@@ -114,9 +123,7 @@ services:
       NOTIFICATION_SERVICE_URL: http://notification-service:8004work
     ports:
       - "5001:5000"
-    depends_on:
-      - api-gateway
-      - auth-service
+   
     networks:
       - travel_network
 

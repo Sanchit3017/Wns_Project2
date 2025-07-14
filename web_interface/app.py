@@ -76,7 +76,7 @@ async def signup_page(request: Request):
 # Authentication API routes
 @app.post("/api/auth/login")
 async def login_api(login_data: LoginRequest):
-    """Login API - proxy to auth service"""
+    """Login API - proxy to auth service with enhanced employee info"""
     auth_url = f"{AUTH_SERVICE_URL}/auth/login"
     try:
         print(f"Attempting to connect to auth service at: {auth_url}")
@@ -90,7 +90,43 @@ async def login_api(login_data: LoginRequest):
             print(f"Auth service response status: {response.status_code}")
             
             if response.status_code == 200:
-                return response.json()
+                auth_data = response.json()
+                
+                # If user is an employee, fetch employee details from user service
+                if auth_data.get("user", {}).get("role") == "employee":
+                    try:
+                        # Search for employee by email in user service
+                        emp_response = await client.get(
+                            f"{USER_SERVICE_URL}/users/employees",
+                            timeout=5.0
+                        )
+                        if emp_response.status_code == 200:
+                            employees_data = emp_response.json()
+                            
+                            # Find employee by email (we need to get user info first)
+                            user_response = await client.get(
+                                f"{AUTH_SERVICE_URL}/auth/users/{auth_data['user']['id']}",
+                                timeout=5.0
+                            )
+                            if user_response.status_code == 200:
+                                user_info = user_response.json()
+                                user_email = user_info.get("email")
+                                
+                                # Find matching employee
+                                for emp in employees_data:
+                                    # We need to match by user_id since employee table has user_id
+                                    if emp.get("user_id") == auth_data["user"]["id"]:
+                                        # Add employee info to user data
+                                        auth_data["user"]["employee_id"] = emp.get("employee_id")
+                                        auth_data["user"]["employee_name"] = emp.get("name")
+                                        auth_data["user"]["phone_number"] = emp.get("phone_number")
+                                        auth_data["user"]["home_location"] = emp.get("home_location")
+                                        break
+                    except Exception as e:
+                        print(f"Error fetching employee details: {e}")
+                        # Continue without employee details if there's an error
+                
+                return auth_data
             else:
                 error_data = response.json()
                 print(f"Auth service error: {error_data}")
@@ -196,12 +232,15 @@ async def driver_dashboard(request: Request):
 
 @app.get("/employee/dashboard", response_class=HTMLResponse)
 async def employee_dashboard(request: Request):
-    """Employee dashboard - placeholder"""
-    return templates.TemplateResponse("base.html", {
-        "request": request, 
-        "title": "Employee Dashboard",
-        "message": "Employee Dashboard - Coming Soon!"
+    """Employee dashboard"""
+    return templates.TemplateResponse("employee_dashboard.html", {
+        "request": request
     })
+
+@app.get("/profile", response_class=HTMLResponse)
+async def profile_page(request: Request):
+    """User profile page"""
+    return templates.TemplateResponse("profile.html", {"request": request})
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):

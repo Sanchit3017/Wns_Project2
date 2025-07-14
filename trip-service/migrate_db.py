@@ -1,8 +1,6 @@
 
 #!/usr/bin/env python3
-"""
-Database migration script to remove foreign key constraints from trips table
-"""
+
 
 import sys
 import os

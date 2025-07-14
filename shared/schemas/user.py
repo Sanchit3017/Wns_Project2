@@ -67,7 +67,7 @@ class DriverWithUser(BaseModel):
 # Employee schemas
 class EmployeeBase(BaseModel):
     name: str
-    employee_id: str
+    employee_id: Optional[str] = None
     phone_number: str
     home_location: str
     commute_schedule: str

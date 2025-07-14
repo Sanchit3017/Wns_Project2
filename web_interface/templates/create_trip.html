@@ -378,10 +378,43 @@ class TripCreator {
             'West': ['Rajajinagar', 'Vijayanagar', 'Malleshwaram', 'Basaveshwaranagar', 'Mahalakshmi Layout'],
             'Central': ['MG Road', 'Brigade Road', 'Cubbon Park', 'UB City', 'Residency Road']
         };
-        
         this.initializeComponents();
         this.loadRecentTrips();
         this.setMinDate();
+        this.prefillEmployeeDetails();
+    }
+
+    async prefillEmployeeDetails() {
+        // Prefill employee ID and name if logged in
+        const user = JSON.parse(localStorage.getItem('user_info') || '{}');
+        if (user && user.role === 'employee' && user.email) {
+            // Use employee details from user data (should be included in login response now)
+            if (user.employee_id && user.employee_name) {
+                document.getElementById('employee-id').value = user.employee_id;
+                document.getElementById('employee-name').value = user.employee_name;
+                document.getElementById('employee-id').readOnly = true;
+                document.getElementById('employee-name').readOnly = true;
+            } else {
+                // Fallback: fetch employee details from backend
+                try {
+                    const res = await fetch('/api/employees/search?q=' + encodeURIComponent(user.email));
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.employees && data.employees.length > 0) {
+                            const emp = data.employees[0];
+                            document.getElementById('employee-id').value = emp.employee_id;
+                            document.getElementById('employee-name').value = emp.name;
+                            document.getElementById('employee-id').readOnly = true;
+                            document.getElementById('employee-name').readOnly = true;
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+            }
+        } else if (user && user.role === 'admin') {
+            // For admin, make fields editable and enable search
+            document.getElementById('employee-id').readOnly = false;
+            document.getElementById('employee-name').readOnly = false;
+        }
     }
 
     initializeComponents() {

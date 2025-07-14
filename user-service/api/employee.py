@@ -20,11 +20,24 @@ async def create_employee(db: Session, user_id: int, employee_data: EmployeeCrea
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Employee profile already exists"
         )
-    
+
+    # Auto-generate employee_id if not provided
+    if not employee_data.employee_id:
+        # Get the highest current employee_id in the format EMP###
+        last_employee = db.query(Employee).filter(Employee.employee_id.like("EMP%")) \
+            .order_by(Employee.employee_id.desc()).first()
+        if last_employee and last_employee.employee_id[3:].isdigit():
+            next_num = int(last_employee.employee_id[3:]) + 1
+        else:
+            next_num = 1
+        new_employee_id = f"EMP{next_num:03d}"
+    else:
+        new_employee_id = employee_data.employee_id
+
     db_employee = Employee(
         user_id=user_id,
         name=employee_data.name,
-        employee_id=employee_data.employee_id,
+        employee_id=new_employee_id,
         phone_number=employee_data.phone_number,
         home_location=employee_data.home_location,
         commute_schedule=employee_data.commute_schedule
