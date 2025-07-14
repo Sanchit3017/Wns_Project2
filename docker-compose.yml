@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   
   postgres:
@@ -101,6 +99,17 @@ services:
       - user-service
       - trip-service
       - notification-service
+    networks:
+      - travel_network
+
+  web-interface:
+    build:
+      context: .
+      dockerfile: web_interface/Dockerfile
+    ports:
+      - "5001:5000"
+    depends_on:
+      - api-gateway
     networks:
       - travel_network
 
