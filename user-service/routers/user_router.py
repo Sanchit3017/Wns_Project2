@@ -8,7 +8,7 @@ from api.driver import (
 )
 from api.employee import (
     get_employee_profile, update_employee_profile,
-    get_employee_by_id, create_employee
+    get_employee_by_id, create_employee, get_employee_by_employee_id
 )
 from api.admin import (
     create_admin, get_admin_profile, update_admin_profile,
@@ -215,6 +215,15 @@ async def get_employee_by_id_endpoint(
 ):
     """Get employee by ID (internal use)"""
     return get_employee_by_id(db, employee_id)
+
+
+@router.get("/employees/by-employee-id/{employee_id}", response_model=EmployeeResponse)
+async def get_employee_by_employee_id_endpoint(
+    employee_id: str,
+    db: Session = Depends(get_db)
+):
+    """Get employee by employee_id (string, e.g., EMP006)"""
+    return get_employee_by_employee_id(db, employee_id)
 
 
 # ===== ADMIN ENDPOINTS =====

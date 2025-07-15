@@ -10,12 +10,11 @@
     <div class="bg-white rounded-lg shadow p-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <div class="mb-4"><span class="font-medium text-gray-700">Employee ID:</span> <span id="profile-employee-id" class="text-gray-900">Loading...</span></div>
+                <div class="mb-4"><span class="font-medium text-gray-700">User ID:</span> <span id="profile-user-id" class="text-gray-900">Loading...</span></div>
+                <div class="mb-4"><span class="font-medium text-gray-700">Role:</span> <span id="profile-role" class="text-gray-900">-</span></div>
+                <div class="mb-4"><span class="font-medium text-gray-700">Name:</span> <span id="profile-name" class="text-gray-900">-</span></div>
                 <div class="mb-4"><span class="font-medium text-gray-700">Email:</span> <span id="profile-email" class="text-gray-900">-</span></div>
-                <div class="mb-4"><span class="font-medium text-gray-700">Password:</span> <span class="text-gray-400">********</span> <span class="text-xs text-wns-blue cursor-pointer" onclick="window.location.href='/profile/settings'">(Change)</span></div>
-            </div>
-            <div>
-                <div class="mb-4"><span class="font-medium text-gray-700">Active Trips:</span> <span id="profile-active-trips" class="text-gray-900">0</span></div>
+                <div class="mb-4"><span class="font-medium text-gray-700">Access Level:</span> <span id="profile-access-level" class="text-gray-900">-</span></div>
             </div>
         </div>
     </div>
@@ -24,45 +23,40 @@
 
 {% block extra_js %}
 <script>
-// Fetch and display employee profile details
-async function loadEmployeeProfile() {
-    // Get user info from localStorage
+// Fetch and display full user profile details
+async function loadUserProfile() {
     const user = JSON.parse(localStorage.getItem('user_info') || '{}');
     if (!user || !user.email) return;
     document.getElementById('profile-email').textContent = user.email;
-
-    // Use employee_id from user data (should be included in login response now)
-    let employeeId = user.employee_id;
-    if (employeeId) {
-        document.getElementById('profile-employee-id').textContent = employeeId;
-        // Fetch active trips count for this employee
-        try {
-            const tripsRes = await fetch('/api/trips/trips');
-            if (tripsRes.ok) {
-                const trips = await tripsRes.json();
-                const activeTrips = trips.filter(trip => trip.employee_id === employeeId && trip.status === 'active');
-                document.getElementById('profile-active-trips').textContent = activeTrips.length;
-            }
-        } catch (e) { /* ignore */ }
-    } else if (user.role === 'employee') {
-        // Fallback: try to fetch employee_id from user service by email
-        try {
-            const res = await fetch('/api/employees/search?q=' + encodeURIComponent(user.email));
+    document.getElementById('profile-user-id').textContent = user.id || '-';
+    document.getElementById('profile-role').textContent = user.role || '-';
+    let profileData = {};
+    let accessLevel = user.role || '-';
+    try {
+        if (user.role === 'employee') {
+            const res = await fetch('/api/employees/' + encodeURIComponent(user.employee_id || user.id));
             if (res.ok) {
                 const data = await res.json();
-                if (data.employees && data.employees.length > 0) {
-                    employeeId = data.employees[0].employee_id;
-                    document.getElementById('profile-employee-id').textContent = employeeId;
-                }
+                if (data.employee) profileData = data.employee;
             }
-        } catch (e) { /* ignore */ }
-    }
-    
-    if (!employeeId) {
-        document.getElementById('profile-employee-id').textContent = 'Not found';
-    }
+        } else if (user.role === 'driver') {
+            const res = await fetch('/api/drivers/' + encodeURIComponent(user.driver_id || user.id));
+            if (res.ok) {
+                const data = await res.json();
+                if (data.driver) profileData = data.driver;
+            }
+        } else if (user.role === 'admin') {
+            const res = await fetch('/api/admins/' + encodeURIComponent(user.admin_id || user.id));
+            if (res.ok) {
+                const data = await res.json();
+                if (data.admin) profileData = data.admin;
+                if (profileData.access_level) accessLevel = profileData.access_level;
+            }
+        }
+    } catch (e) { /* ignore */ }
+    document.getElementById('profile-name').textContent = profileData.name || user.name || '-';
+    document.getElementById('profile-access-level').textContent = accessLevel;
 }
-
-document.addEventListener('DOMContentLoaded', loadEmployeeProfile);
+document.addEventListener('DOMContentLoaded', loadUserProfile);
 </script>
 {% endblock %} 

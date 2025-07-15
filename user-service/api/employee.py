@@ -173,3 +173,24 @@ def get_employee_by_id(db: Session, employee_id: int) -> EmployeeResponse:
         created_at=employee.created_at,
         updated_at=employee.updated_at
     )
+
+
+def get_employee_by_employee_id(db: Session, employee_id_str: str) -> EmployeeResponse:
+    """Get employee by employee_id (string, e.g., EMP006)"""
+    employee = db.query(Employee).filter(Employee.employee_id == employee_id_str).first()
+    if not employee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Employee not found"
+        )
+    return EmployeeResponse(
+        id=employee.id,
+        user_id=employee.user_id,
+        name=employee.name,
+        employee_id=employee.employee_id,
+        phone_number=employee.phone_number,
+        home_location=employee.home_location,
+        commute_schedule=employee.commute_schedule,
+        created_at=employee.created_at,
+        updated_at=employee.updated_at
+    )

@@ -58,6 +58,7 @@ class LoginRequest(BaseModel):
     password: str
 
 class SignupRequest(BaseModel):
+    name: str
     email: str
     password: str
     role: str
@@ -146,7 +147,7 @@ async def login_api(login_data: LoginRequest):
 
 @app.post("/api/auth/register")
 async def register_api(signup_data: SignupRequest):
-    """Register API - proxy to auth service"""
+    """Register API - proxy to auth service and create user in respective service"""
     auth_url = f"{AUTH_SERVICE_URL}/auth/register"
     try:
         print(f"Attempting to register at auth service: {auth_url}")
@@ -154,19 +155,76 @@ async def register_api(signup_data: SignupRequest):
             response = await client.post(
                 auth_url,
                 json={
+                    "name": signup_data.name,
                     "email": signup_data.email, 
                     "password": signup_data.password,
                     "role": signup_data.role
                 },
                 timeout=10.0
             )
-            
             print(f"Auth service register response status: {response.status_code}")
-            
+            data = response.json()
             if response.status_code == 200:
-                return response.json()
+                user_id = data.get("id")
+                role = signup_data.role
+                # Create in respective service
+                if role == "employee":
+                    empRes = await client.post(
+                        f"{USER_SERVICE_URL}/users/employees",
+                        headers={
+                            "Content-Type": "application/json",
+                            "x-user-id": str(user_id),
+                            "x-user-role": "employee"
+                        },
+                        json={
+                            "name": signup_data.name,
+                            "phone_number": "",
+                            "home_location": "",
+                            "commute_schedule": ""
+                        },
+                        timeout=10.0
+                    )
+                    empData = empRes.json() if empRes.status_code == 200 else None
+                    data["employee"] = empData
+                elif role == "driver":
+                    drvRes = await client.post(
+                        f"{USER_SERVICE_URL}/users/drivers",
+                        headers={
+                            "Content-Type": "application/json",
+                            "x-user-id": str(user_id),
+                            "x-user-role": "driver"
+                        },
+                        json={
+                            "name": signup_data.name,
+                            "phone_number": "",
+                            "license_number": "",
+                            "vehicle_id": None
+                        },
+                        timeout=10.0
+                    )
+                    drvData = drvRes.json() if drvRes.status_code == 200 else None
+                    data["driver"] = drvData
+                elif role == "admin":
+                    admRes = await client.post(
+                        f"{USER_SERVICE_URL}/users/admins",
+                        headers={
+                            "Content-Type": "application/json",
+                            "x-user-id": str(user_id),
+                            "x-user-role": "admin"
+                        },
+                        json={
+                            "name": signup_data.name,
+                            "phone_number": "",
+                            "department": "",
+                            "access_level": "admin"
+                        },
+                        timeout=10.0
+                    )
+                    admData = admRes.json() if admRes.status_code == 200 else None
+                    data["admin"] = admData
+                return data
             else:
-                error_data = response.json()
+                error_data = data
                 print(f"Auth service register error: {error_data}")
                 raise HTTPException(
                     status_code=response.status_code,
@@ -369,107 +427,26 @@ async def get_trips_history(
     role: Optional[str] = None,
     status: Optional[str] = None
 ):
-    """API endpoint to fetch trip history based on user role and filters"""
-    print("=== DEBUG: get_trips_history function called! ===")
-    print(f"Trips history called with role={role}, user_id={user_id}, status={status}")
-    trips = generate_sample_trip_data(role, user_id, status)
-    analytics = {
-        "total_trips": len(trips),
-        "completed_trips": len([t for t in trips if t.get("status") == "completed"]),
-        "pending_trips": len([t for t in trips if t.get("status") in ["pending", "scheduled"]]),
-        "cancelled_trips": len([t for t in trips if t.get("status") == "cancelled"]),
-        "in_progress_trips": len([t for t in trips if t.get("status") == "in_progress"])
-    } if role == "admin" else None
-    
-    result = {"trips": trips, "role": role or "employee"}
-    if analytics:
-        result["analytics"] = analytics
-    
-    return result
-
-def generate_sample_trip_data(role=None, user_id=None, status=None):
-    """Generate sample trip data for demonstration"""
-    from datetime import datetime, timedelta
-    import random
-    
-    sample_trips = [
-        {
-            "id": 1,
-            "pickup_location": "Electronic City",
-            "destination": "WNS Global Services, Whitefield",
-            "scheduled_time": (datetime.now() - timedelta(days=2)).isoformat(),
-            "actual_start_time": (datetime.now() - timedelta(days=2, hours=-1)).isoformat(),
-            "actual_end_time": (datetime.now() - timedelta(days=2, hours=-2)).isoformat(),
-            "status": "completed",
-            "employee_id": 1,
-            "driver_id": 1,
-            "employee_name": "John Employee",
-            "driver_name": "Ravi Kumar",
-            "notes": "Regular office commute"
-        },
-        {
-            "id": 2,
-            "pickup_location": "Koramangala",
-            "destination": "WNS Global Services, Whitefield",
-            "scheduled_time": (datetime.now() - timedelta(days=1)).isoformat(),
-            "actual_start_time": (datetime.now() - timedelta(days=1, hours=-1)).isoformat(),
-            "status": "in_progress",
-            "employee_id": 2,
-            "driver_id": 2,
-            "employee_name": "Jane Smith",
-            "driver_name": "Suresh Reddy",
-            "notes": "Airport pickup requested"
-        },
-        {
-            "id": 3,
-            "pickup_location": "HSR Layout",
-            "destination": "WNS Global Services, Whitefield",
-            "scheduled_time": (datetime.now() + timedelta(hours=2)).isoformat(),
-            "status": "scheduled",
-            "employee_id": 3,
-            "driver_id": 3,
-            "employee_name": "Mike Johnson",
-            "driver_name": "Amit Sharma",
-            "notes": "Client meeting - urgent"
-        },
-        {
-            "id": 4,
-            "pickup_location": "Bellandur",
-            "destination": "Kempegowda International Airport",
-            "scheduled_time": (datetime.now() - timedelta(days=3)).isoformat(),
-            "status": "cancelled",
-            "employee_id": 4,
-            "driver_id": None,
-            "employee_name": "Sarah Wilson",
-            "driver_name": None,
-            "notes": "Trip cancelled due to flight delay"
-        },
-        {
-            "id": 5,
-            "pickup_location": "Marathahalli",
-            "destination": "WNS Global Services, Whitefield",
-            "scheduled_time": (datetime.now() + timedelta(days=1)).isoformat(),
-            "status": "scheduled",
-            "employee_id": 5,
-            "driver_id": 1,
-            "employee_name": "David Brown",
-            "driver_name": "Ravi Kumar",
-            "notes": "Early morning pickup requested"
-        }
-    ]
-    
-    # Filter by status if specified
-    if status and status != "all":
-        sample_trips = [trip for trip in sample_trips if trip["status"] == status]
-    
-    # Filter by user if not admin
-    if role != "admin" and user_id:
-        if role == "driver":
-            sample_trips = [trip for trip in sample_trips if trip.get("driver_id") == user_id]
-        else:  # employee
-            sample_trips = [trip for trip in sample_trips if trip.get("employee_id") == user_id]
-    
-    return sample_trips
+    """API endpoint to fetch trip history based on user role and filters (real backend)"""
+    try:
+        async with httpx.AsyncClient() as client:
+            params = {}
+            if status and status != "all":
+                params["status"] = status
+            # Employee: filter by employee_id
+            if role == "employee" and user_id:
+                response = await client.get(f"{API_GATEWAY_URL}/api/trips/trips", params={"employee_id": user_id, **params}, timeout=10)
+            # Driver: filter by driver_id
+            elif role == "driver" and user_id:
+                response = await client.get(f"{API_GATEWAY_URL}/api/trips/trips", params={"driver_id": user_id, **params}, timeout=10)
+            # Admin: fetch all
+            else:
+                response = await client.get(f"{API_GATEWAY_URL}/api/trips/trips", params=params, timeout=10)
+            trips = response.json() if response.status_code == 200 else []
+            result = {"trips": trips, "role": role or "employee"}
+            return result
+    except Exception as e:
+        return {"trips": [], "role": role or "employee", "error": str(e)}
 
 @app.get("/api/trips/{trip_id}")
 async def get_trip_details(trip_id: int, request: Request):
@@ -717,47 +694,33 @@ async def search_employees(q: str = ""):
 
 @app.get("/api/employees/{employee_id}")
 async def get_employee_by_id(employee_id: str):
-    """Get employee details by employee ID"""
+    """Get employee details by employee ID (supports both int and string IDs)"""
     try:
-        # Try to get employee from user service
         async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(f"{USER_SERVICE_URL}/users/employees", timeout=5)
+            # Try as int (real user)
+            if employee_id.isdigit():
+                response = await client.get(f"{USER_SERVICE_URL}/users/employees/{employee_id}", timeout=5)
                 if response.status_code == 200:
-                    employees_data = response.json()
-                    
-                    # Find employee by employee_id
-                    for emp in employees_data:
-                        if str(emp.get('employee_id')) == str(employee_id):
-                            return {
-                                "employee": {
-                                    "id": emp.get('id'),
-                                    "name": emp.get('name'),
-                                    "employee_id": emp.get('employee_id'),
-                                    "phone_number": emp.get('phone_number'),
-                                    "home_location": emp.get('home_location')
-                                }
-                            }
-                    
-                    return {"error": "Employee not found", "employee": None}
-                    
-            except Exception as e:
-                print(f"Error fetching employee: {e}")
-        
-        # Fallback data for testing
-        fallback_employees = {
-            "EMP001": {"id": 1, "name": "John Employee", "employee_id": "EMP001", "phone_number": "+91-9876543210", "home_location": "Bellandur"},
-            "EMP002": {"id": 2, "name": "Jane Smith", "employee_id": "EMP002", "phone_number": "+91-9876543211", "home_location": "Whitefield"},
-            "EMP003": {"id": 3, "name": "Mike Johnson", "employee_id": "EMP003", "phone_number": "+91-9876543212", "home_location": "Electronic City"},
-            "EMP004": {"id": 4, "name": "Sarah Wilson", "employee_id": "EMP004", "phone_number": "+91-9876543213", "home_location": "Koramangala"},
-            "EMP005": {"id": 5, "name": "David Brown", "employee_id": "EMP005", "phone_number": "+91-9876543214", "home_location": "Indiranagar"}
-        }
-        
-        if employee_id in fallback_employees:
-            return {"employee": fallback_employees[employee_id]}
-        else:
+                    emp = response.json()
+                    return {"employee": {
+                        "id": emp.get('id'),
+                        "name": emp.get('name'),
+                        "employee_id": emp.get('employee_id'),
+                        "phone_number": emp.get('phone_number'),
+                        "home_location": emp.get('home_location')
+                    }}
+            # Try as string (seeded employee)
+            response = await client.get(f"{USER_SERVICE_URL}/users/employees/by-employee-id/{employee_id}", timeout=5)
+            if response.status_code == 200:
+                emp = response.json()
+                return {"employee": {
+                    "id": emp.get('id'),
+                    "name": emp.get('name'),
+                    "employee_id": emp.get('employee_id'),
+                    "phone_number": emp.get('phone_number'),
+                    "home_location": emp.get('home_location')
+                }}
             return {"error": "Employee not found", "employee": None}
-        
     except Exception as e:
         return {"error": str(e), "employee": None}
 

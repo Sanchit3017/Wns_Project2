@@ -47,6 +47,7 @@ async def register(
     user = create_user(db, user_data)
     return UserResponse(
         id=user.id,
+        name=user.name,
         email=user.email,
         role=user.role,
         is_active=user.is_active,
@@ -95,6 +96,7 @@ async def get_user_by_id_endpoint(
         raise HTTPException(status_code=404, detail="User not found")
     return UserResponse(
         id=user.id,
+        name=user.name,
         email=user.email,
         role=user.role,
         is_active=user.is_active,

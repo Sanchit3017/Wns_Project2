@@ -7,18 +7,40 @@ from shared.config import TripServiceSettings
 from typing import List, Optional
 from datetime import datetime
 
+import numbers
 
 settings = TripServiceSettings()
 user_service = ServiceClient(settings.USER_SERVICE_URL)
 
 
 async def create_trip(db: Session, trip_data: TripCreate) -> TripResponse:
-    """Create new trip"""
+    """Create new trip with employee validation (supports seeded and real employees)"""
+    # Validate employee existence
+    employee_id = trip_data.employee_id
+    employee_internal_id = None
+    employee_data = None
+    # Accept both int and str for employee_id
+    if isinstance(employee_id, int) or (isinstance(employee_id, str) and employee_id.isdigit()):
+        # Try as int (real user)
+        try:
+            eid = int(employee_id)
+            employee_data = await user_service.get(f"/users/employees/{eid}")
+            employee_internal_id = eid
+        except Exception:
+            raise HTTPException(status_code=404, detail="Employee not found (by internal id)")
+    else:
+        # Try as string (seeded employee)
+        try:
+            employee_data = await user_service.get(f"/users/employees/by-employee-id/{employee_id}")
+            employee_internal_id = employee_data["id"]
+        except Exception:
+            raise HTTPException(status_code=404, detail="Employee not found (by employee_id)")
+
     db_trip = Trip(
         pickup_location=trip_data.pickup_location,
         destination=trip_data.destination,
         scheduled_time=trip_data.scheduled_time,
-        employee_id=trip_data.employee_id,
+        employee_id=employee_internal_id,
         driver_id=trip_data.driver_id,
         vehicle_id=trip_data.vehicle_id,
         notes=trip_data.notes

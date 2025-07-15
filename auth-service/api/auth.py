@@ -40,6 +40,7 @@ def create_user(db: Session, user_data: UserCreate) -> User:
     # Create new user
     hashed_password = get_password_hash(user_data.password)
     db_user = User(
+        name=user_data.name,
         email=user_data.email,
         hashed_password=hashed_password,
         role=user_data.role
@@ -64,6 +65,7 @@ def login_user(db: Session, email: str, password: str) -> Token:
         token_type="bearer",
         user=UserResponse(
             id=user.id,
+            name=user.name,
             email=user.email,
             role=user.role,
             is_active=user.is_active,

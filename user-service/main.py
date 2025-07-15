@@ -12,12 +12,44 @@ from models.vehicle import Vehicle
 from models.admin import Admin
 from database import engine, Base
 import uvicorn
+from sqlalchemy.orm import Session
+from database import SessionLocal
+
+def seed_employees():
+    employees = [
+        {"employee_id": "EMP006", "name": "Sanchit Dhale"},
+        {"employee_id": "EMP007", "name": "Eshwar Bhore"},
+        {"employee_id": "EMP008", "name": "Vinay Dubey"},
+        {"employee_id": "EMP009", "name": "Rajeev"},
+        {"employee_id": "EMP010", "name": "Aishwarya"},
+    ]
+    db: Session = SessionLocal()
+    try:
+        for idx, emp in enumerate(employees):
+            # Use negative user_id to avoid conflict with real users
+            user_id = -(idx + 1)
+            existing = db.query(Employee).filter_by(employee_id=emp["employee_id"]).first()
+            if not existing:
+                db_emp = Employee(
+                    user_id=user_id,
+                    name=emp["name"],
+                    employee_id=emp["employee_id"],
+                    phone_number="",
+                    home_location="",
+                    commute_schedule=""
+                )
+                db.add(db_emp)
+        db.commit()
+    finally:
+        db.close()
 
 # Initialize settings
 settings = UserServiceSettings()
 
 # Create tables
 Base.metadata.create_all(bind=engine)
+# Seed initial employees
+seed_employees()
 
 # Initialize FastAPI app
 app = FastAPI(
