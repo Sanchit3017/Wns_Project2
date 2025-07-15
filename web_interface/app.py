@@ -347,6 +347,183 @@ async def create_trip_page(request: Request):
         "office": WNS_OFFICE
     })
 
+@app.get("/trips/history", response_class=HTMLResponse)
+async def trips_history_page(request: Request):
+    """Trip history page"""
+    return templates.TemplateResponse("trips_history.html", {
+        "request": request
+    })
+
+@app.get("/trips/{trip_id}", response_class=HTMLResponse)
+async def trip_details_page(request: Request, trip_id: int):
+    """Trip details page"""
+    return templates.TemplateResponse("trip_details.html", {
+        "request": request,
+        "trip_id": trip_id,
+        "office": WNS_OFFICE
+    })
+
+@app.get("/api/trips/history")
+async def get_trips_history(
+    user_id: Optional[int] = None,
+    role: Optional[str] = None,
+    status: Optional[str] = None
+):
+    """API endpoint to fetch trip history based on user role and filters"""
+    print("=== DEBUG: get_trips_history function called! ===")
+    print(f"Trips history called with role={role}, user_id={user_id}, status={status}")
+    trips = generate_sample_trip_data(role, user_id, status)
+    analytics = {
+        "total_trips": len(trips),
+        "completed_trips": len([t for t in trips if t.get("status") == "completed"]),
+        "pending_trips": len([t for t in trips if t.get("status") in ["pending", "scheduled"]]),
+        "cancelled_trips": len([t for t in trips if t.get("status") == "cancelled"]),
+        "in_progress_trips": len([t for t in trips if t.get("status") == "in_progress"])
+    } if role == "admin" else None
+    
+    result = {"trips": trips, "role": role or "employee"}
+    if analytics:
+        result["analytics"] = analytics
+    
+    return result
+
+def generate_sample_trip_data(role=None, user_id=None, status=None):
+    """Generate sample trip data for demonstration"""
+    from datetime import datetime, timedelta
+    import random
+    
+    sample_trips = [
+        {
+            "id": 1,
+            "pickup_location": "Electronic City",
+            "destination": "WNS Global Services, Whitefield",
+            "scheduled_time": (datetime.now() - timedelta(days=2)).isoformat(),
+            "actual_start_time": (datetime.now() - timedelta(days=2, hours=-1)).isoformat(),
+            "actual_end_time": (datetime.now() - timedelta(days=2, hours=-2)).isoformat(),
+            "status": "completed",
+            "employee_id": 1,
+            "driver_id": 1,
+            "employee_name": "John Employee",
+            "driver_name": "Ravi Kumar",
+            "notes": "Regular office commute"
+        },
+        {
+            "id": 2,
+            "pickup_location": "Koramangala",
+            "destination": "WNS Global Services, Whitefield",
+            "scheduled_time": (datetime.now() - timedelta(days=1)).isoformat(),
+            "actual_start_time": (datetime.now() - timedelta(days=1, hours=-1)).isoformat(),
+            "status": "in_progress",
+            "employee_id": 2,
+            "driver_id": 2,
+            "employee_name": "Jane Smith",
+            "driver_name": "Suresh Reddy",
+            "notes": "Airport pickup requested"
+        },
+        {
+            "id": 3,
+            "pickup_location": "HSR Layout",
+            "destination": "WNS Global Services, Whitefield",
+            "scheduled_time": (datetime.now() + timedelta(hours=2)).isoformat(),
+            "status": "scheduled",
+            "employee_id": 3,
+            "driver_id": 3,
+            "employee_name": "Mike Johnson",
+            "driver_name": "Amit Sharma",
+            "notes": "Client meeting - urgent"
+        },
+        {
+            "id": 4,
+            "pickup_location": "Bellandur",
+            "destination": "Kempegowda International Airport",
+            "scheduled_time": (datetime.now() - timedelta(days=3)).isoformat(),
+            "status": "cancelled",
+            "employee_id": 4,
+            "driver_id": None,
+            "employee_name": "Sarah Wilson",
+            "driver_name": None,
+            "notes": "Trip cancelled due to flight delay"
+        },
+        {
+            "id": 5,
+            "pickup_location": "Marathahalli",
+            "destination": "WNS Global Services, Whitefield",
+            "scheduled_time": (datetime.now() + timedelta(days=1)).isoformat(),
+            "status": "scheduled",
+            "employee_id": 5,
+            "driver_id": 1,
+            "employee_name": "David Brown",
+            "driver_name": "Ravi Kumar",
+            "notes": "Early morning pickup requested"
+        }
+    ]
+    
+    # Filter by status if specified
+    if status and status != "all":
+        sample_trips = [trip for trip in sample_trips if trip["status"] == status]
+    
+    # Filter by user if not admin
+    if role != "admin" and user_id:
+        if role == "driver":
+            sample_trips = [trip for trip in sample_trips if trip.get("driver_id") == user_id]
+        else:  # employee
+            sample_trips = [trip for trip in sample_trips if trip.get("employee_id") == user_id]
+    
+    return sample_trips
+
+@app.get("/api/trips/{trip_id}")
+async def get_trip_details(trip_id: int, request: Request):
+    """API endpoint to fetch detailed trip information"""
+    try:
+        # Get user context from headers (set by frontend)
+        user_id = request.headers.get("x-user-id", "1")
+        user_role = request.headers.get("x-user-role", "employee")
+        user_email = request.headers.get("x-user-email", "user@travel.com")
+        
+        async with httpx.AsyncClient() as client:
+            headers = {
+                "x-user-id": user_id,
+                "x-user-role": user_role,
+                "x-user-email": user_email
+            }
+            
+            # Fetch trip details from trip service
+            response = await client.get(
+                f"{API_GATEWAY_URL}/api/trips/trips/{trip_id}",
+                headers=headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                trip_data = response.json()
+                return trip_data
+            elif response.status_code == 404:
+                raise HTTPException(status_code=404, detail="Trip not found")
+            else:
+                # Return sample data if service unavailable
+                return {
+                    "id": trip_id,
+                    "pickup_location": "Electronic City",
+                    "destination": "WNS Vuram, Whitefield",
+                    "scheduled_time": "2024-01-15T09:00:00",
+                    "status": "in_progress",
+                    "employee_name": "John Doe",
+                    "employee_id": "EMP001",
+                    "driver_name": "Ravi Kumar",
+                    "driver_contact": "+91 9876543210",
+                    "vehicle_plate_number": "KA 01 AB 1234",
+                    "vehicle_type": "Sedan",
+                    "notes": "Please call before arrival",
+                    "created_at": "2024-01-15T08:30:00",
+                    "actual_start_time": "2024-01-15T09:05:00"
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching trip details: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @app.get("/api/dashboard/stats")
 async def get_dashboard_stats():
     """Get real-time dashboard statistics"""

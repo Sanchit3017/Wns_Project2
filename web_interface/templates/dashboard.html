@@ -1,177 +1,199 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - WNS Bangalore Transport{% endblock %}
+{% block title %}Dashboard - WNS Transport Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .gradient-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .metric-card {
+        transition: all 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .zone-marker {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    
+    .zone-east { background-color: #ef4444; }
+    .zone-west { background-color: #3b82f6; }
+    .zone-north { background-color: #10b981; }
+    .zone-south { background-color: #f59e0b; }
+    .zone-central { background-color: #8b5cf6; }
+    
+    .activity-item {
+        animation: slideIn 0.5s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .pulse-dot {
+        animation: pulse 2s infinite;
+    }
+    
+    .feature-card {
+        background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+        transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        background: linear-gradient(145deg, #e2e8f0, #cbd5e1);
+        transform: translateY(-2px);
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+    
+    .map-container {
+        height: 450px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1 class="h3 mb-0">
-                <i class="fas fa-tachometer-alt text-primary me-2"></i>
-                WNS Bangalore Transport Dashboard
+<!-- Hero Section -->
+<div class="gradient-card rounded-2xl p-8 mb-8 text-white">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+        <div>
+            <h1 class="text-4xl font-bold mb-2">
+                <i class="fas fa-tachometer-alt mr-3"></i>
+                WNS Transport Dashboard
             </h1>
-            <div class="d-flex align-items-center">
-                <span class="status-indicator status-active live-update"></span>
-                <small class="text-muted">Live Updates Active</small>
-            </div>
+            <p class="text-blue-100 text-lg">
+                Comprehensive transport management for {{ office.name }}
+            </p>
+            <p class="text-blue-200 text-sm mt-1">
+                <i class="fas fa-map-marker-alt mr-2"></i>{{ office.address }}
+            </p>
         </div>
-        <p class="text-muted mt-2">Real-time monitoring for {{ office.name }} - {{ office.address }}</p>
-    </div>
-</div>
-
-<!-- Key Statistics Row -->
-<div class="row mb-4">
-    <div class="col-md-3 mb-3">
-        <div class="card stat-card">
-            <div class="card-body text-center">
-                <i class="fas fa-car fa-2x mb-2"></i>
-                <h4 class="mb-1" id="active-trips">12</h4>
-                <small>Active Trips</small>
+        <div class="mt-4 md:mt-0 flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-green-400 rounded-full pulse-dot"></div>
+                <span class="text-blue-100">Live Updates</span>
             </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card stat-card">
-            <div class="card-body text-center">
-                <i class="fas fa-users fa-2x mb-2"></i>
-                <h4 class="mb-1" id="available-drivers">8</h4>
-                <small>Available Drivers</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card stat-card">
-            <div class="card-body text-center">
-                <i class="fas fa-map-marked-alt fa-2x mb-2"></i>
-                <h4 class="mb-1">{{ zones|length - 1 }}</h4>
-                <small>Coverage Zones</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card stat-card">
-            <div class="card-body text-center">
-                <i class="fas fa-traffic-light fa-2x mb-2"></i>
-                <h4 class="mb-1" id="traffic-status">Normal</h4>
-                <small>Traffic Status</small>
-            </div>
+            <button id="refresh-all" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition duration-200 backdrop-blur-sm">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
         </div>
     </div>
 </div>
 
-<!-- Main Content Row -->
-<div class="row">
-    <!-- Zone Coverage Map -->
-    <div class="col-lg-8 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-map me-2"></i>
-                    Bangalore Zone Coverage
-                </h5>
-                <span class="badge bg-primary">Live View</span>
+<!-- Key Performance Metrics -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="metric-card bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm font-medium">Active Trips</p>
+                <p class="text-3xl font-bold text-gray-900" id="active-trips">12</p>
+                <p class="text-green-600 text-sm mt-1">
+                    <i class="fas fa-arrow-up mr-1"></i>+2 from yesterday
+                </p>
             </div>
-            <div class="card-body">
+            <div class="bg-blue-100 p-3 rounded-full">
+                <i class="fas fa-car text-blue-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="metric-card bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm font-medium">Available Drivers</p>
+                <p class="text-3xl font-bold text-gray-900" id="available-drivers">8</p>
+                <p class="text-blue-600 text-sm mt-1">
+                    <i class="fas fa-clock mr-1"></i>Ready to assign
+                </p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full">
+                <i class="fas fa-users text-green-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="metric-card bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm font-medium">Coverage Zones</p>
+                <p class="text-3xl font-bold text-gray-900">{{ zones|length - 1 }}</p>
+                <p class="text-purple-600 text-sm mt-1">
+                    <i class="fas fa-map-marked-alt mr-1"></i>Across Bangalore
+                </p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-full">
+                <i class="fas fa-map text-purple-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="metric-card bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm font-medium">Traffic Status</p>
+                <p class="text-2xl font-bold text-gray-900" id="traffic-status">Normal</p>
+                <p class="text-orange-600 text-sm mt-1">
+                    <i class="fas fa-traffic-light mr-1"></i>Avg ETA: 25 min
+                </p>
+            </div>
+            <div class="bg-orange-100 p-3 rounded-full">
+                <i class="fas fa-road text-orange-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+    <!-- Interactive Map -->
+    <div class="xl:col-span-2">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-map mr-2 text-blue-600"></i>
+                        Bangalore Zone Coverage
+                    </h3>
+                    <p class="text-gray-500 text-sm">Real-time monitoring across all zones</p>
+                </div>
+                <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                    <span class="w-2 h-2 bg-green-400 rounded-full inline-block mr-1 animate-pulse"></span>
+                    Live View
+                </span>
+            </div>
+            <div class="p-6">
                 <div id="bangalore-map" class="map-container"></div>
-                <div class="mt-3">
-                    <div class="row">
-                        {% for zone_name, zone_data in zones.items() %}
-                            {% if zone_name != 'Non_Hiring' %}
-                            <div class="col-md-2 mb-2">
-                                <span class="zone-badge zone-{{ zone_name.lower() }}">
-                                    {{ zone_name }}
-                                </span>
-                                <small class="d-block text-muted">{{ zone_data.areas|length }} areas</small>
-                            </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Live Activity Feed -->
-    <div class="col-lg-4 mb-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-broadcast-tower me-2"></i>
-                    Live Activity
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="timeline" id="activity-timeline">
-                    <div class="timeline-item">
-                        <div class="d-flex justify-content-between">
-                            <strong>Driver assigned</strong>
-                            <small class="text-muted">2 min ago</small>
-                        </div>
-                        <p class="mb-0 text-muted">Trip #T001 - Yelahanka to Whitefield</p>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="d-flex justify-content-between">
-                            <strong>Trip completed</strong>
-                            <small class="text-muted">5 min ago</small>
-                        </div>
-                        <p class="mb-0 text-muted">Trip #T002 - Electronic City pickup</p>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="d-flex justify-content-between">
-                            <strong>New trip request</strong>
-                            <small class="text-muted">8 min ago</small>
-                        </div>
-                        <p class="mb-0 text-muted">Employee pickup from JP Nagar</p>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="d-flex justify-content-between">
-                            <strong>Traffic alert</strong>
-                            <small class="text-muted">12 min ago</small>
-                        </div>
-                        <p class="mb-0 text-muted">Heavy traffic on ITPL Main Road</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Zone Statistics -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-chart-bar me-2"></i>
-                    Zone-wise Performance
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
+                
+                <!-- Zone Legend -->
+                <div class="mt-6 grid grid-cols-2 md:grid-cols-5 gap-4">
                     {% for zone_name, zone_data in zones.items() %}
                         {% if zone_name != 'Non_Hiring' %}
-                        <div class="col-md-2 mb-3">
-                            <div class="card zone-card">
-                                <div class="card-body text-center">
-                                    <h6 class="card-title">{{ zone_name }}</h6>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="text-primary">
-                                                <i class="fas fa-car"></i>
-                                                <span class="d-block">{{ (loop.index % 6) + 1 }}</span>
-                                                <small>Trips</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="text-success">
-                                                <i class="fas fa-user"></i>
-                                                <span class="d-block">{{ (loop.index % 4) + 1 }}</span>
-                                                <small>Drivers</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <small class="text-muted">{{ zone_data.coverage }}</small>
-                                </div>
+                        <div class="flex items-center">
+                            <span class="zone-marker zone-{{ zone_name.lower() }}"></span>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ zone_name }}</p>
+                                <p class="text-xs text-gray-500">{{ zone_data.areas|length }} areas</p>
                             </div>
                         </div>
                         {% endif %}
@@ -180,215 +202,734 @@
             </div>
         </div>
     </div>
+    
+    <!-- Live Activity & Quick Actions -->
+    <div class="space-y-6">
+        <!-- Live Activity Feed -->
+        <div class="bg-white rounded-xl shadow-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-broadcast-tower mr-2 text-green-600"></i>
+                    Live Activity
+                </h3>
+            </div>
+            <div class="p-4">
+                <div id="activity-feed" class="space-y-3 max-h-64 overflow-y-auto">
+                    <!-- Activity items will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-xl shadow-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-rocket mr-2 text-purple-600"></i>
+                    Quick Actions
+                </h3>
+            </div>
+            <div class="p-4 space-y-3">
+                <button onclick="window.location.href='/trips/create'" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-plus mr-2"></i>Create New Trip
+                </button>
+                <button onclick="window.location.href='/trips/history'" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-history mr-2"></i>View Trip History
+                </button>
+                <button onclick="window.location.href='/tracking'" class="w-full bg-green-100 hover:bg-green-200 text-green-700 py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-location-arrow mr-2"></i>Live Tracking
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Quick Actions -->
-<div class="row mb-4">
-    <div class="col-md-6 mb-3">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-rocket me-2"></i>
-                    Quick Actions
-                </h5>
+<!-- Application Features Overview -->
+<div class="bg-white rounded-xl shadow-lg mb-8">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">
+            <i class="fas fa-star mr-2 text-yellow-500"></i>
+            Platform Features
+        </h3>
+        <p class="text-gray-500 text-sm">Comprehensive transport management capabilities</p>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="feature-card rounded-lg p-4 text-center">
+                <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-route text-blue-600 text-xl"></i>
+                </div>
+                <h4 class="font-semibold text-gray-900 mb-2">Smart Routing</h4>
+                <p class="text-gray-600 text-sm">AI-powered route optimization for efficient transportation</p>
             </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="/trips/create" class="btn btn-wns">
-                        <i class="fas fa-plus me-2"></i>Create New Trip
-                    </a>
-                    <button class="btn btn-outline-primary" onclick="refreshDrivers()">
-                        <i class="fas fa-sync me-2"></i>Refresh Driver Status
-                    </button>
-                    <button class="btn btn-outline-success" onclick="viewAllTrips()">
-                        <i class="fas fa-list me-2"></i>View All Trips
-                    </button>
+            
+            <div class="feature-card rounded-lg p-4 text-center">
+                <div class="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-clock text-green-600 text-xl"></i>
+                </div>
+                <h4 class="font-semibold text-gray-900 mb-2">Real-time Tracking</h4>
+                <p class="text-gray-600 text-sm">Live location updates and ETA calculations</p>
+            </div>
+            
+            <div class="feature-card rounded-lg p-4 text-center">
+                <div class="bg-purple-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-users text-purple-600 text-xl"></i>
+                </div>
+                <h4 class="font-semibold text-gray-900 mb-2">User Management</h4>
+                <p class="text-gray-600 text-sm">Role-based access for employees, drivers, and admins</p>
+            </div>
+            
+            <div class="feature-card rounded-lg p-4 text-center">
+                <div class="bg-orange-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-chart-line text-orange-600 text-xl"></i>
+                </div>
+                <h4 class="font-semibold text-gray-900 mb-2">Analytics & Reports</h4>
+                <p class="text-gray-600 text-sm">Comprehensive insights and performance metrics</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Zone Performance Dashboard -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Zone Statistics -->
+    <div class="bg-white rounded-xl shadow-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-chart-bar mr-2 text-indigo-600"></i>
+                Zone Performance
+            </h3>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4" id="zone-stats">
+                {% for zone_name, zone_data in zones.items() %}
+                    {% if zone_name != 'Non_Hiring' %}
+                    <div class="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200 border border-gray-100">
+                        <div class="flex items-center">
+                            <span class="zone-marker zone-{{ zone_name.lower() }}"></span>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ zone_name }}</p>
+                                <p class="text-sm text-gray-500">{{ zone_data.coverage }}</p>
+                                <p class="text-xs text-gray-400 mt-1">{{ zone_data.areas|length }} areas covered</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-right">
+                                <p class="text-sm font-medium text-gray-900" id="zone-{{ zone_name.lower() }}-trips">{{ (loop.index % 6) + 1 }} trips</p>
+                                <p class="text-xs text-gray-500">{{ (loop.index % 4) + 1 }} drivers</p>
+                            </div>
+                            <button 
+                                onclick="showZoneDetails('{{ zone_name }}', {{ zone_data|tojson|safe }})"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1">
+                                <i class="fas fa-eye text-xs"></i>
+                                <span>View Details</span>
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Status -->
+    <div class="bg-white rounded-xl shadow-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-server mr-2 text-green-600"></i>
+                System Status
+            </h3>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4" id="system-status">
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-700">API Gateway</span>
+                    <span class="flex items-center text-green-600">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        Online
+                    </span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-700">Trip Service</span>
+                    <span class="flex items-center text-green-600">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        Online
+                    </span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-700">User Service</span>
+                    <span class="flex items-center text-green-600">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        Online
+                    </span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-700">Notification Service</span>
+                    <span class="flex items-center text-green-600">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        Online
+                    </span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-700">Database</span>
+                    <span class="flex items-center text-green-600">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        Connected
+                    </span>
+                </div>
+            </div>
+            
+            <div class="mt-6 p-4 bg-green-50 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                    <span class="text-green-800 font-medium">All Systems Operational</span>
+                </div>
+                <p class="text-green-700 text-sm mt-1">Last checked: <span id="last-check-time">Just now</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transport Policy & Information -->
+<div class="bg-white rounded-xl shadow-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">
+            <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+            WNS Transport Policy & Guidelines
+        </h3>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="text-center">
+                <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-clock text-blue-600"></i>
+                </div>
+                <h4 class="font-semibold text-gray-900 mb-1">Operating Hours</h4>
+                <p class="text-gray-600 text-sm">06:30 - 20:30</p>
+                <p class="text-gray-500 text-xs">Sociable hours only</p>
+            </div>
+            
+            <div class="text-center">
+                <div class="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-map-pin text-green-600"></i>
+                </div>
+                <h4 class="font-semibold text-gray-900 mb-1">Pre-Login Buffer</h4>
+                <p class="text-gray-600 text-sm">15 minutes</p>
+                <p class="text-gray-500 text-xs">Before shift start</p>
+            </div>
+            
+            <div class="text-center">
+                <div class="bg-orange-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-sign-out-alt text-orange-600"></i>
+                </div>
+                <h4 class="font-semibold text-gray-900 mb-1">Post-Logout Buffer</h4>
+                <p class="text-gray-600 text-sm">20 minutes</p>
+                <p class="text-gray-500 text-xs">After shift end</p>
+            </div>
+            
+            <div class="text-center">
+                <div class="bg-purple-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-shield-alt text-purple-600"></i>
+                </div>
+                <h4 class="font-semibold text-gray-900 mb-1">Zone Coverage</h4>
+                <p class="text-gray-600 text-sm">5 Active Zones</p>
+                <p class="text-gray-500 text-xs">Across Bangalore</p>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Zone Details Modal -->
+<div id="zoneModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <div>
+                <h3 class="text-xl font-semibold text-gray-900" id="modalZoneName">Zone Details</h3>
+                <p class="text-gray-500 text-sm" id="modalZoneCoverage">Zone coverage information</p>
+            </div>
+            <button onclick="closeZoneModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Modal Content -->
+        <div class="flex flex-col lg:flex-row h-[70vh]">
+            <!-- Zone Map -->
+            <div class="flex-1 relative">
+                <div id="zoneMap" class="w-full h-full bg-gray-100"></div>
+                <!-- Map Legend -->
+                <div class="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-3 z-10">
+                    <h4 class="text-sm font-semibold text-gray-900 mb-2">Legend</h4>
+                    <div class="space-y-1">
+                        <div class="flex items-center text-xs">
+                            <div class="w-3 h-3 bg-blue-600 rounded mr-2"></div>
+                            <span>Zone Areas</span>
+                        </div>
+                        <div class="flex items-center text-xs">
+                            <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
+                            <span>WNS Office</span>
+                        </div>
+                        <div class="flex items-center text-xs">
+                            <div class="w-3 h-3 bg-green-500 rounded mr-2"></div>
+                            <span>Active Trips</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Zone Information Panel -->
+            <div class="lg:w-80 bg-gray-50 p-6 overflow-y-auto">
+                <div class="space-y-6">
+                    <!-- Zone Stats -->
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Zone Statistics</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-white rounded-lg p-3 text-center">
+                                <i class="fas fa-map-marker-alt text-blue-600 text-lg mb-1"></i>
+                                <p class="text-2xl font-bold text-gray-900" id="modalAreasCount">0</p>
+                                <p class="text-xs text-gray-500">Areas</p>
+                            </div>
+                            <div class="bg-white rounded-lg p-3 text-center">
+                                <i class="fas fa-route text-green-600 text-lg mb-1"></i>
+                                <p class="text-2xl font-bold text-gray-900" id="modalActiveTrips">0</p>
+                                <p class="text-xs text-gray-500">Active Trips</p>
+                            </div>
+                            <div class="bg-white rounded-lg p-3 text-center">
+                                <i class="fas fa-users text-purple-600 text-lg mb-1"></i>
+                                <p class="text-2xl font-bold text-gray-900" id="modalDrivers">0</p>
+                                <p class="text-xs text-gray-500">Drivers</p>
+                            </div>
+                            <div class="bg-white rounded-lg p-3 text-center">
+                                <i class="fas fa-clock text-orange-600 text-lg mb-1"></i>
+                                <p class="text-2xl font-bold text-gray-900" id="modalAvgTime">0</p>
+                                <p class="text-xs text-gray-500">Avg ETA</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Areas List -->
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Covered Areas</h4>
+                        <div id="modalAreasList" class="space-y-2 max-h-48 overflow-y-auto">
+                            <!-- Areas will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Recent Activity</h4>
+                        <div id="modalRecentActivity" class="space-y-2">
+                            <!-- Recent activity will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Zone Actions -->
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Quick Actions</h4>
+                        <div class="space-y-2">
+                            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Create Trip in Zone
+                            </button>
+                            <button class="w-full bg-green-100 hover:bg-green-200 text-green-700 py-2 px-4 rounded-lg text-sm transition-colors">
+                                <i class="fas fa-eye mr-2"></i>View Zone Trips
+                            </button>
+                            <button class="w-full bg-purple-100 hover:bg-purple-200 text-purple-700 py-2 px-4 rounded-lg text-sm transition-colors">
+                                <i class="fas fa-chart-bar mr-2"></i>Zone Analytics
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-6 mb-3">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-info-circle me-2"></i>
-                    WNS Transport Policy
-                </h5>
-            </div>
-            <div class="card-body">
-                <ul class="list-unstyled mb-0">
-                    <li><i class="fas fa-clock text-primary me-2"></i>Sociable Hours: 06:30 - 20:30</li>
-                    <li><i class="fas fa-map-pin text-success me-2"></i>15 min before login buffer</li>
-                    <li><i class="fas fa-route text-warning me-2"></i>20 min after logout buffer</li>
-                    <li><i class="fas fa-shield-alt text-info me-2"></i>Zone-based assignments</li>
-                </ul>
-            </div>
-        </div>
-    </div>
 </div>
 
-<!-- Performance Chart -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-chart-line me-2"></i>
-                    Daily Performance Metrics
-                </h5>
-            </div>
-            <div class="card-body">
-                <canvas id="performanceChart" height="100"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Bangalore map
-    initializeBangaloreMap();
-    
-    // Initialize performance chart
-    initializePerformanceChart();
-    
-    // Start real-time updates
-    startRealTimeUpdates();
-});
+// Initialize data from template with fallbacks
+let ZONES_DATA;
+let OFFICE_DATA;
 
-function initializeBangaloreMap() {
-    // Center on WNS Vuram office location
-    const map = L.map('bangalore-map').setView([{{ office.coordinates.lat }}, {{ office.coordinates.lng }}], 11);
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-    
-    // Add office marker
-    const officeIcon = L.divIcon({
-        html: '<i class="fas fa-building text-primary"></i>',
-        iconSize: [20, 20],
-        className: 'custom-div-icon'
-    });
-    
-    L.marker([{{ office.coordinates.lat }}, {{ office.coordinates.lng }}], {icon: officeIcon})
-        .addTo(map)
-        .bindPopup('<b>{{ office.name }}</b><br>{{ office.address }}');
-    
-    // Add zone coverage circles (simulated)
-    const zoneColors = {
-        'East': '#3b82f6',
-        'West': '#f59e0b', 
-        'North': '#10b981',
-        'South': '#ef4444',
-        'Central': '#8b5cf6'
-    };
-    
-    {% for zone_name, zone_data in zones.items() %}
-        {% if zone_name != 'Non_Hiring' %}
-        L.circle([{{ office.coordinates.lat + (loop.index0 * 0.01) }}, {{ office.coordinates.lng + (loop.index0 * 0.01) }}], {
-            color: '{{ zoneColors[zone_name] if zone_name in zoneColors else "#6b7280" }}',
-            fillColor: '{{ zoneColors[zone_name] if zone_name in zoneColors else "#6b7280" }}',
-            fillOpacity: 0.2,
-            radius: 5000
-        }).addTo(map).bindPopup('<b>{{ zone_name }} Zone</b><br>{{ zone_data.areas|length }} areas covered');
-        {% endif %}
-    {% endfor %}
+try {
+    ZONES_DATA = {{ zones|tojson|safe }};
+} catch (e) {
+    ZONES_DATA = {};
 }
 
-function initializePerformanceChart() {
-    const ctx = document.getElementById('performanceChart').getContext('2d');
-    
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['6 AM', '8 AM', '10 AM', '12 PM', '2 PM', '4 PM', '6 PM', '8 PM'],
-            datasets: [{
-                label: 'Active Trips',
-                data: [2, 8, 12, 15, 18, 22, 16, 8],
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                tension: 0.4
-            }, {
-                label: 'Available Drivers',
-                data: [15, 12, 8, 5, 3, 2, 6, 12],
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
+try {
+    OFFICE_DATA = {{ office|tojson|safe }};
+} catch (e) {
+    OFFICE_DATA = { name: "WNS Office", lat: 12.9716, lng: 77.5946, address: "Bangalore" };
+}
+
+class DashboardManager {
+    constructor() {
+        this.map = null;
+        this.zoneMap = null;
+        this.zones = ZONES_DATA || {};
+        this.office = OFFICE_DATA || { name: "WNS Office", lat: 12.9716, lng: 77.5946, address: "Bangalore" };
+        this.currentZoneMarkers = [];
+        this.init();
+    }
+
+    init() {
+        this.initializeMap();
+        this.loadDashboardData();
+        this.setupRealTimeUpdates();
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        document.getElementById('refresh-all')?.addEventListener('click', () => {
+            this.loadDashboardData();
+            this.showNotification('Dashboard refreshed successfully', 'success');
+        });
+    }
+
+    initializeMap() {
+        // Initialize Leaflet map
+        this.map = L.map('bangalore-map').setView([12.9716, 77.5946], 11);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(this.map);
+
+        // Add WNS office marker
+        const officeIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div class="bg-red-600 w-4 h-4 rounded-full border-2 border-white shadow-lg"></div>',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+
+        L.marker([this.office.lat, this.office.lng], { icon: officeIcon })
+         .addTo(this.map)
+         .bindPopup(`<strong>${this.office.name}</strong><br>${this.office.address}`);
+
+        // Add zone markers
+        this.addZoneMarkers();
+    }
+
+    addZoneMarkers() {
+        const zoneColors = {
+            'East': '#ef4444',
+            'West': '#3b82f6', 
+            'North': '#10b981',
+            'South': '#f59e0b',
+            'Central': '#8b5cf6'
+        };
+
+        Object.entries(this.zones).forEach(([zoneName, zoneData]) => {
+            if (zoneName === 'Non_Hiring') return;
+            
+            const color = zoneColors[zoneName] || '#6b7280';
+            
+            zoneData.areas.forEach(area => {
+                const marker = L.circleMarker([area.lat, area.lng], {
+                    radius: 8,
+                    fillColor: color,
+                    color: '#ffffff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(this.map);
+
+                marker.bindPopup(`
+                    <div class="text-center">
+                        <h4 class="font-bold text-gray-900">${area.name}</h4>
+                        <p class="text-sm text-gray-600">${zoneName} Zone</p>
+                        <div class="mt-2 text-xs">
+                            <div>Coverage: ${zoneData.coverage}</div>
+                            <div>Status: <span class="text-green-600">Active</span></div>
+                        </div>
+                    </div>
+                `);
+            });
+        });
+    }
+
+    async loadDashboardData() {
+        try {
+            const response = await fetch('/api/dashboard/stats');
+            const data = await response.json();
+            this.updateMetrics(data);
+            this.updateActivityFeed(data);
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+            this.showNotification('Failed to load dashboard data', 'error');
         }
-    });
-}
+    }
 
-function startRealTimeUpdates() {
-    // Simulate real-time activity updates
-    setInterval(function() {
-        addActivityUpdate();
-    }, 15000); // Update every 15 seconds
-}
+    updateMetrics(data) {
+        const elements = {
+            'active-trips': data.active_trips || 12,
+            'available-drivers': data.available_drivers || 8,
+            'traffic-status': data.traffic_status || 'Normal'
+        };
 
-function addActivityUpdate() {
-    const activities = [
-        'Driver assigned to new trip',
-        'Trip completed successfully', 
-        'New pickup request received',
-        'Traffic alert updated',
-        'Driver status changed to available',
-        'Route optimization completed'
-    ];
-    
-    const locations = ['Yelahanka', 'Whitefield', 'Electronic City', 'JP Nagar', 'Hebbal', 'Koramangala'];
-    
-    const timeline = document.getElementById('activity-timeline');
-    const activity = activities[Math.floor(Math.random() * activities.length)];
-    const location = locations[Math.floor(Math.random() * locations.length)];
-    
-    const newItem = document.createElement('div');
-    newItem.className = 'timeline-item';
-    newItem.innerHTML = `
-        <div class="d-flex justify-content-between">
-            <strong>${activity}</strong>
-            <small class="text-muted">Just now</small>
-        </div>
-        <p class="mb-0 text-muted">Location: ${location}</p>
-    `;
-    
-    timeline.insertBefore(newItem, timeline.firstChild);
-    
-    // Remove old items (keep only last 4)
-    while (timeline.children.length > 4) {
-        timeline.removeChild(timeline.lastChild);
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
+        });
+
+        // Update zone statistics
+        if (data.zone_activity) {
+            Object.entries(data.zone_activity).forEach(([zone, stats]) => {
+                const element = document.getElementById(`zone-${zone.toLowerCase()}-trips`);
+                if (element) {
+                    element.textContent = `${stats.trips} trips`;
+                }
+            });
+        }
+    }
+
+    updateActivityFeed(data) {
+        const feed = document.getElementById('activity-feed');
+        if (!feed) return;
+
+        const activities = [
+            { time: '2 min ago', text: 'New trip assigned to Driver #4', icon: 'fas fa-car', color: 'text-blue-600' },
+            { time: '5 min ago', text: 'Trip completed in East Zone', icon: 'fas fa-check-circle', color: 'text-green-600' },
+            { time: '8 min ago', text: 'Driver joined from West Zone', icon: 'fas fa-user-plus', color: 'text-purple-600' },
+            { time: '12 min ago', text: 'Route optimized for traffic', icon: 'fas fa-route', color: 'text-orange-600' },
+            { time: '15 min ago', text: 'Employee trip request received', icon: 'fas fa-bell', color: 'text-indigo-600' }
+        ];
+
+        feed.innerHTML = activities.map(activity => `
+            <div class="activity-item flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                <div class="flex-shrink-0">
+                    <i class="${activity.icon} ${activity.color}"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-900">${activity.text}</p>
+                    <p class="text-xs text-gray-500">${activity.time}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    setupRealTimeUpdates() {
+        // Update dashboard every 30 seconds
+        setInterval(() => {
+            this.loadDashboardData();
+            this.updateLastCheckTime();
+        }, 30000);
+    }
+
+    updateLastCheckTime() {
+        const element = document.getElementById('last-check-time');
+        if (element) {
+            element.textContent = new Date().toLocaleTimeString();
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        const colors = {
+            success: 'bg-green-100 border-green-400 text-green-700',
+            error: 'bg-red-100 border-red-400 text-red-700',
+            info: 'bg-blue-100 border-blue-400 text-blue-700'
+        };
+
+        notification.className = `fixed top-4 right-4 z-50 p-4 border rounded-lg ${colors[type]} transition-all duration-300`;
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <span>${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-lg">&times;</button>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 5000);
     }
 }
 
-function refreshDrivers() {
-    showNotification('Refreshing driver status...', 'info');
-    // Simulate API call
+// Zone Modal Functions
+function showZoneDetails(zoneName, zoneData) {
+    // Update modal content
+    document.getElementById('modalZoneName').textContent = zoneName + ' Zone';
+    document.getElementById('modalZoneCoverage').textContent = zoneData.coverage;
+    document.getElementById('modalAreasCount').textContent = zoneData.areas.length;
+    document.getElementById('modalActiveTrips').textContent = Math.floor(Math.random() * 10) + 1;
+    document.getElementById('modalDrivers').textContent = Math.floor(Math.random() * 8) + 2;
+    document.getElementById('modalAvgTime').textContent = (Math.floor(Math.random() * 20) + 15) + 'm';
+    
+    // Populate areas list
+    const areasList = document.getElementById('modalAreasList');
+    areasList.innerHTML = '';
+    zoneData.areas.forEach(area => {
+        const areaDiv = document.createElement('div');
+        areaDiv.className = 'bg-white rounded-lg p-2 flex justify-between items-center';
+        areaDiv.innerHTML = `
+            <span class="text-sm text-gray-700">${area.name}</span>
+            <span class="text-xs text-gray-500">${area.lat.toFixed(4)}, ${area.lng.toFixed(4)}</span>
+        `;
+        areasList.appendChild(areaDiv);
+    });
+    
+    // Populate recent activity
+    const recentActivity = document.getElementById('modalRecentActivity');
+    const activities = [
+        'Trip completed successfully',
+        'New driver assigned',
+        'Route optimized',
+        'Traffic update received'
+    ];
+    recentActivity.innerHTML = '';
+    activities.slice(0, 3).forEach((activity, index) => {
+        const activityDiv = document.createElement('div');
+        activityDiv.className = 'text-sm text-gray-600 flex items-center';
+        activityDiv.innerHTML = `
+            <i class="fas fa-clock text-gray-400 mr-2"></i>
+            <span>${Math.floor(Math.random() * 30) + 1}m ago - ${activity}</span>
+        `;
+        recentActivity.appendChild(activityDiv);
+    });
+    
+    // Show modal
+    document.getElementById('zoneModal').classList.remove('hidden');
+    
+    // Initialize zone map after modal is visible
     setTimeout(() => {
-        showNotification('Driver status updated successfully!', 'success');
-    }, 1500);
+        initZoneMap(zoneName, zoneData);
+    }, 100);
 }
 
-function viewAllTrips() {
-    showNotification('Loading trip details...', 'info');
-    // In real implementation, this would navigate to trips page
+function closeZoneModal() {
+    document.getElementById('zoneModal').classList.add('hidden');
+    if (dashboardManager && dashboardManager.zoneMap) {
+        dashboardManager.zoneMap.remove();
+        dashboardManager.zoneMap = null;
+    }
 }
+
+function initZoneMap(zoneName, zoneData) {
+    // Remove existing map if any
+    if (dashboardManager.zoneMap) {
+        dashboardManager.zoneMap.remove();
+    }
+    
+    // Calculate center of zone
+    const lats = zoneData.areas.map(area => area.lat);
+    const lngs = zoneData.areas.map(area => area.lng);
+    const centerLat = lats.reduce((a, b) => a + b, 0) / lats.length;
+    const centerLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
+    
+    // Initialize map
+    dashboardManager.zoneMap = L.map('zoneMap').setView([centerLat, centerLng], 12);
+    
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(dashboardManager.zoneMap);
+    
+    // Zone color mapping
+    const zoneColors = {
+        'East': '#ef4444',
+        'West': '#3b82f6', 
+        'North': '#10b981',
+        'South': '#f59e0b',
+        'Central': '#8b5cf6'
+    };
+    
+    const color = zoneColors[zoneName] || '#6b7280';
+    
+    // Clear existing markers
+    dashboardManager.currentZoneMarkers = [];
+    
+    // Add zone area markers
+    zoneData.areas.forEach(area => {
+        const marker = L.circleMarker([area.lat, area.lng], {
+            radius: 8,
+            fillColor: color,
+            color: '#ffffff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8
+        }).addTo(dashboardManager.zoneMap);
+        
+        marker.bindPopup(`
+            <div class="p-2">
+                <h4 class="font-semibold text-gray-900">${area.name}</h4>
+                <p class="text-sm text-gray-600">${zoneName} Zone</p>
+                <div class="mt-2 text-xs text-gray-500">
+                    <div>Lat: ${area.lat.toFixed(6)}</div>
+                    <div>Lng: ${area.lng.toFixed(6)}</div>
+                </div>
+            </div>
+        `);
+        
+        dashboardManager.currentZoneMarkers.push(marker);
+    });
+    
+    // Add office marker
+    L.marker([dashboardManager.office.lat, dashboardManager.office.lng], {
+        icon: L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #ef4444; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white;"></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        })
+    }).addTo(dashboardManager.zoneMap)
+    .bindPopup(`
+        <div class="p-2">
+            <h4 class="font-semibold text-gray-900">${dashboardManager.office.name}</h4>
+            <p class="text-sm text-gray-600">Main Office</p>
+        </div>
+    `);
+    
+    // Add some simulated active trips
+    for (let i = 0; i < 3; i++) {
+        const randomArea = zoneData.areas[Math.floor(Math.random() * zoneData.areas.length)];
+        const lat = randomArea.lat + (Math.random() - 0.5) * 0.01;
+        const lng = randomArea.lng + (Math.random() - 0.5) * 0.01;
+        
+        L.marker([lat, lng], {
+            icon: L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color: #10b981; width: 10px; height: 10px; border-radius: 50%; border: 2px solid white;"></div>`,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            })
+        }).addTo(dashboardManager.zoneMap)
+        .bindPopup(`
+            <div class="p-2">
+                <h4 class="font-semibold text-gray-900">Active Trip #${1000 + i}</h4>
+                <p class="text-sm text-gray-600">In Progress</p>
+                <p class="text-xs text-gray-500">ETA: ${Math.floor(Math.random() * 30) + 5} min</p>
+            </div>
+        `);
+    }
+    
+    // Fit map to zone bounds
+    if (zoneData.areas.length > 0) {
+        const group = new L.featureGroup(dashboardManager.currentZoneMarkers);
+        dashboardManager.zoneMap.fitBounds(group.getBounds().pad(0.1));
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('zoneModal');
+    if (e.target === modal) {
+        closeZoneModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeZoneModal();
+    }
+});
+
+// Initialize dashboard when page loads
+let dashboardManager;
+document.addEventListener('DOMContentLoaded', function() {
+    dashboardManager = new DashboardManager();
+});
 </script>
 {% endblock %}

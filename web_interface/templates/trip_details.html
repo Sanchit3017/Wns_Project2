@@ -1,0 +1,676 @@
+{% extends "base.html" %}
+
+{% block title %}Trip Details - WNS Transport Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .trip-status-badge {
+        animation: pulse 2s infinite;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 1.5rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0.5rem;
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 50%;
+        background-color: #e5e7eb;
+    }
+    
+    .timeline-item.completed::before {
+        background-color: #10b981;
+    }
+    
+    .timeline-item.current::before {
+        background-color: #3b82f6;
+        animation: pulse 2s infinite;
+    }
+    
+    .map-container {
+        height: 400px;
+        border-radius: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="mb-8">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">
+                <i class="fas fa-route text-wns-blue mr-3"></i>
+                Trip Details
+            </h1>
+            <p class="text-gray-600 mt-1">Complete information and real-time tracking</p>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+                <div class="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-sm text-gray-600">Live Updates</span>
+            </div>
+            <a href="/trips/history" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-history mr-2"></i>Back to History
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Trip Status Banner -->
+<div id="trip-status-banner" class="bg-white rounded-xl shadow-lg p-6 mb-8 border-l-4 border-blue-500">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <div class="bg-blue-100 p-3 rounded-full">
+                <i class="fas fa-map-marker-alt text-blue-600 text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">Trip #<span id="trip-id-display">{{ trip_id }}</span></h2>
+                <p class="text-gray-600">
+                    <span id="trip-route-display">Loading route information...</span>
+                </p>
+            </div>
+        </div>
+        <div id="trip-status-container">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 trip-status-badge">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                Loading...
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    <!-- Trip Information -->
+    <div class="lg:col-span-2 space-y-8">
+        <!-- Basic Details -->
+        <div class="bg-white rounded-xl shadow-lg">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-xl font-bold text-gray-900">
+                    <i class="fas fa-info-circle text-wns-blue mr-2"></i>
+                    Trip Information
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Employee</label>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium text-gray-900" id="employee-name">Loading...</div>
+                            <div class="text-sm text-gray-600" id="employee-id">-</div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Driver</label>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium text-gray-900" id="driver-name">Loading...</div>
+                            <div class="text-sm text-gray-600" id="driver-contact">-</div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Pickup Location</label>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium text-gray-900" id="pickup-location">Loading...</div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Destination</label>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium text-gray-900" id="destination">Loading...</div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Scheduled Time</label>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium text-gray-900" id="scheduled-time">Loading...</div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Vehicle</label>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium text-gray-900" id="vehicle-info">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6" id="trip-notes-section" style="display: none;">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <div class="text-gray-900" id="trip-notes">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Tracking Map -->
+        <div class="bg-white rounded-xl shadow-lg">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-900">
+                        <i class="fas fa-map text-wns-blue mr-2"></i>
+                        Live Tracking
+                    </h3>
+                    <button id="refresh-location" class="bg-wns-blue hover:bg-wns-light-blue text-white px-4 py-2 rounded-lg transition duration-200">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div id="trip-map" class="map-container"></div>
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div class="bg-green-50 p-3 rounded-lg">
+                        <div class="font-medium text-green-800">Current Speed</div>
+                        <div class="text-green-600" id="current-speed">- km/h</div>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-lg">
+                        <div class="font-medium text-blue-800">ETA</div>
+                        <div class="text-blue-600" id="estimated-arrival">-</div>
+                    </div>
+                    <div class="bg-orange-50 p-3 rounded-lg">
+                        <div class="font-medium text-orange-800">Distance Remaining</div>
+                        <div class="text-orange-600" id="distance-remaining">- km</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trip Timeline -->
+        <div class="bg-white rounded-xl shadow-lg">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-xl font-bold text-gray-900">
+                    <i class="fas fa-clock text-wns-blue mr-2"></i>
+                    Trip Timeline
+                </h3>
+            </div>
+            <div class="p-6">
+                <div id="trip-timeline" class="space-y-4">
+                    <!-- Timeline items will be populated here -->
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p>Loading timeline...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">
+                <i class="fas fa-bolt text-wns-blue mr-2"></i>
+                Quick Actions
+            </h3>
+            <div class="space-y-3">
+                <button id="contact-driver" class="w-full flex items-center justify-center p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200" disabled>
+                    <i class="fas fa-phone mr-2"></i>
+                    Contact Driver
+                </button>
+                <button id="share-location" class="w-full flex items-center justify-center p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200">
+                    <i class="fas fa-share-alt mr-2"></i>
+                    Share Trip Details
+                </button>
+                <button id="report-issue" class="w-full flex items-center justify-center p-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-200">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Report Issue
+                </button>
+                <div id="admin-actions" class="space-y-3" style="display: none;">
+                    <button id="cancel-trip" class="w-full flex items-center justify-center p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200">
+                        <i class="fas fa-times mr-2"></i>
+                        Cancel Trip
+                    </button>
+                    <button id="modify-trip" class="w-full flex items-center justify-center p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition duration-200">
+                        <i class="fas fa-edit mr-2"></i>
+                        Modify Trip
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trip Statistics -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">
+                <i class="fas fa-chart-bar text-wns-blue mr-2"></i>
+                Trip Statistics
+            </h3>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span class="text-gray-600">Total Distance</span>
+                    <span class="font-medium" id="total-distance">- km</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span class="text-gray-600">Duration</span>
+                    <span class="font-medium" id="trip-duration">-</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span class="text-gray-600">Average Speed</span>
+                    <span class="font-medium" id="average-speed">- km/h</span>
+                </div>
+                <div class="flex justify-between items-center py-2">
+                    <span class="text-gray-600">Created At</span>
+                    <span class="font-medium" id="created-at">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Updates -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">
+                <i class="fas fa-broadcast-tower text-wns-blue mr-2"></i>
+                Live Updates
+            </h3>
+            <div id="live-updates" class="space-y-3">
+                <div class="text-center py-4">
+                    <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                        <i class="fas fa-circle text-gray-400 mr-2"></i>
+                        Connecting...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class TripDetailsManager {
+    constructor() {
+        this.tripId = {{ trip_id }};
+        this.map = null;
+        this.driverMarker = null;
+        this.routeLine = null;
+        this.webSocket = null;
+        this.currentUser = this.getUserInfo();
+        
+        this.init();
+    }
+
+    getUserInfo() {
+        const userInfo = localStorage.getItem('user_info');
+        if (userInfo) {
+            try {
+                return JSON.parse(userInfo);
+            } catch (e) {
+                console.error('Failed to parse user info:', e);
+            }
+        }
+        return { role: 'employee', id: 1, email: 'user@travel.com' };
+    }
+
+    async init() {
+        this.bindEvents();
+        await this.loadTripDetails();
+        this.initializeMap();
+        this.setupWebSocket();
+        this.setupAdminActions();
+    }
+
+    bindEvents() {
+        document.getElementById('refresh-location')?.addEventListener('click', () => {
+            this.refreshLocation();
+        });
+
+        document.getElementById('contact-driver')?.addEventListener('click', () => {
+            this.contactDriver();
+        });
+
+        document.getElementById('share-location')?.addEventListener('click', () => {
+            this.shareTrip();
+        });
+
+        document.getElementById('report-issue')?.addEventListener('click', () => {
+            this.reportIssue();
+        });
+
+        document.getElementById('cancel-trip')?.addEventListener('click', () => {
+            this.cancelTrip();
+        });
+
+        document.getElementById('modify-trip')?.addEventListener('click', () => {
+            this.modifyTrip();
+        });
+    }
+
+    async loadTripDetails() {
+        try {
+            const response = await fetch(`/api/trips/${this.tripId}`, {
+                headers: {
+                    'x-user-id': this.currentUser.id || '1',
+                    'x-user-role': this.currentUser.role || 'employee',
+                    'x-user-email': this.currentUser.email || 'user@travel.com'
+                }
+            });
+
+            if (response.ok) {
+                const trip = await response.json();
+                this.displayTripDetails(trip);
+                this.generateTimeline(trip);
+            } else {
+                this.showError('Failed to load trip details');
+            }
+        } catch (error) {
+            console.error('Error loading trip details:', error);
+            this.showError('Error loading trip details');
+        }
+    }
+
+    displayTripDetails(trip) {
+        // Update trip information
+        document.getElementById('trip-route-display').textContent = 
+            `${trip.pickup_location || 'Unknown'} → ${trip.destination || 'Unknown'}`;
+        
+        // Update status badge
+        const statusContainer = document.getElementById('trip-status-container');
+        const statusColor = this.getStatusColor(trip.status);
+        const statusIcon = this.getStatusIcon(trip.status);
+        
+        statusContainer.innerHTML = `
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusColor} trip-status-badge">
+                <i class="${statusIcon} mr-2"></i>
+                ${trip.status || 'unknown'}
+            </span>
+        `;
+
+        // Update details
+        document.getElementById('employee-name').textContent = trip.employee_name || 'Unknown';
+        document.getElementById('employee-id').textContent = trip.employee_id || '-';
+        document.getElementById('driver-name').textContent = trip.driver_name || 'Not assigned';
+        document.getElementById('driver-contact').textContent = trip.driver_contact || '-';
+        document.getElementById('pickup-location').textContent = trip.pickup_location || '-';
+        document.getElementById('destination').textContent = trip.destination || '-';
+        document.getElementById('scheduled-time').textContent = this.formatDateTime(trip.scheduled_time);
+        document.getElementById('vehicle-info').textContent = 
+            `${trip.vehicle_plate_number || 'Not assigned'} - ${trip.vehicle_type || ''}`;
+        
+        // Show notes if available
+        if (trip.notes) {
+            document.getElementById('trip-notes').textContent = trip.notes;
+            document.getElementById('trip-notes-section').style.display = 'block';
+        }
+
+        // Update statistics
+        document.getElementById('created-at').textContent = this.formatDateTime(trip.created_at);
+        
+        // Enable contact driver if driver is assigned
+        if (trip.driver_name && trip.driver_contact) {
+            document.getElementById('contact-driver').disabled = false;
+        }
+    }
+
+    generateTimeline(trip) {
+        const timeline = document.getElementById('trip-timeline');
+        const events = [
+            { 
+                title: 'Trip Created', 
+                time: trip.created_at, 
+                status: 'completed',
+                icon: 'fas fa-plus-circle'
+            },
+            { 
+                title: 'Driver Assigned', 
+                time: trip.driver_assigned_at, 
+                status: trip.driver_name ? 'completed' : 'pending',
+                icon: 'fas fa-user-check'
+            },
+            { 
+                title: 'Trip Started', 
+                time: trip.actual_start_time, 
+                status: trip.actual_start_time ? 'completed' : (trip.status === 'in_progress' ? 'current' : 'pending'),
+                icon: 'fas fa-play'
+            },
+            { 
+                title: 'En Route', 
+                time: null, 
+                status: trip.status === 'in_progress' ? 'current' : 'pending',
+                icon: 'fas fa-route'
+            },
+            { 
+                title: 'Trip Completed', 
+                time: trip.actual_end_time, 
+                status: trip.actual_end_time ? 'completed' : 'pending',
+                icon: 'fas fa-flag-checkered'
+            }
+        ];
+
+        timeline.innerHTML = events.map(event => `
+            <div class="timeline-item ${event.status}">
+                <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0 w-8 h-8 ${event.status === 'completed' ? 'bg-green-100 text-green-600' : 
+                        event.status === 'current' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'} 
+                        rounded-full flex items-center justify-center">
+                        <i class="${event.icon} text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900">${event.title}</div>
+                        <div class="text-sm text-gray-500">
+                            ${event.time ? this.formatDateTime(event.time) : 
+                                event.status === 'current' ? 'In progress...' : 'Pending'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    initializeMap() {
+        const mapElement = document.getElementById('trip-map');
+        if (!mapElement) return;
+
+        // Initialize map with Bangalore center
+        this.map = L.map('trip-map').setView([12.9716, 77.5946], 11);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(this.map);
+
+        // Load trip route if available
+        this.loadTripRoute();
+    }
+
+    async loadTripRoute() {
+        // Simulate trip tracking data
+        // In production, this would connect to real GPS tracking
+        const pickup = [12.9716, 77.5946]; // Bangalore center
+        const destination = [12.9698, 77.7499]; // Whitefield
+        
+        // Add markers
+        L.marker(pickup).addTo(this.map)
+            .bindPopup('Pickup Location')
+            .openPopup();
+            
+        L.marker(destination).addTo(this.map)
+            .bindPopup('Destination');
+
+        // Add route line
+        this.routeLine = L.polyline([pickup, destination], {
+            color: '#003f7f',
+            weight: 4,
+            opacity: 0.7
+        }).addTo(this.map);
+
+        // Fit map to route
+        this.map.fitBounds(this.routeLine.getBounds(), { padding: [20, 20] });
+
+        // Simulate driver position
+        this.simulateDriverMovement(pickup, destination);
+    }
+
+    simulateDriverMovement(start, end) {
+        // Simple simulation - in production this would be real GPS data
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 0.01;
+            if (progress >= 1) {
+                clearInterval(interval);
+                return;
+            }
+
+            const lat = start[0] + (end[0] - start[0]) * progress;
+            const lng = start[1] + (end[1] - start[1]) * progress;
+            
+            if (this.driverMarker) {
+                this.driverMarker.setLatLng([lat, lng]);
+            } else {
+                this.driverMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'driver-marker',
+                        html: '<i class="fas fa-car text-blue-600"></i>',
+                        iconSize: [20, 20]
+                    })
+                }).addTo(this.map).bindPopup('Driver Location');
+            }
+
+            // Update live stats
+            document.getElementById('current-speed').textContent = '45 km/h';
+            document.getElementById('estimated-arrival').textContent = '15 mins';
+            document.getElementById('distance-remaining').textContent = `${(1 - progress) * 25} km`;
+        }, 2000);
+    }
+
+    setupWebSocket() {
+        // In production, this would connect to a real WebSocket for live updates
+        this.simulateLiveUpdates();
+    }
+
+    simulateLiveUpdates() {
+        const updatesContainer = document.getElementById('live-updates');
+        const updates = [
+            'Trip tracking started',
+            'Driver en route to pickup',
+            'Real-time location updates active'
+        ];
+
+        updatesContainer.innerHTML = `
+            <div class="text-center py-2">
+                <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    <i class="fas fa-circle text-green-500 mr-2"></i>
+                    Connected
+                </div>
+            </div>
+            ${updates.map(update => `
+                <div class="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                    <i class="fas fa-info-circle text-blue-500 mr-1"></i>
+                    ${update}
+                </div>
+            `).join('')}
+        `;
+    }
+
+    setupAdminActions() {
+        if (this.currentUser.role === 'admin') {
+            document.getElementById('admin-actions').style.display = 'block';
+        }
+    }
+
+    contactDriver() {
+        alert('Feature to contact driver would be implemented here');
+    }
+
+    shareTrip() {
+        if (navigator.share) {
+            navigator.share({
+                title: `Trip #${this.tripId}`,
+                text: 'Track my trip in real-time',
+                url: window.location.href
+            });
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            this.showToast('Trip link copied to clipboard');
+        }
+    }
+
+    reportIssue() {
+        const issue = prompt('Please describe the issue:');
+        if (issue) {
+            this.showToast('Issue reported successfully');
+        }
+    }
+
+    cancelTrip() {
+        if (confirm('Are you sure you want to cancel this trip?')) {
+            this.showToast('Trip cancellation initiated');
+        }
+    }
+
+    modifyTrip() {
+        alert('Trip modification feature would be implemented here');
+    }
+
+    refreshLocation() {
+        this.showToast('Location refreshed');
+        // Refresh the map and tracking data
+        this.loadTripRoute();
+    }
+
+    getStatusColor(status) {
+        const colors = {
+            'pending': 'bg-yellow-100 text-yellow-800',
+            'confirmed': 'bg-blue-100 text-blue-800',
+            'in_progress': 'bg-green-100 text-green-800',
+            'completed': 'bg-gray-100 text-gray-800',
+            'cancelled': 'bg-red-100 text-red-800'
+        };
+        return colors[status] || 'bg-gray-100 text-gray-800';
+    }
+
+    getStatusIcon(status) {
+        const icons = {
+            'pending': 'fas fa-clock',
+            'confirmed': 'fas fa-check',
+            'in_progress': 'fas fa-route',
+            'completed': 'fas fa-flag-checkered',
+            'cancelled': 'fas fa-times'
+        };
+        return icons[status] || 'fas fa-question';
+    }
+
+    formatDateTime(dateString) {
+        if (!dateString) return '-';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        } catch (e) {
+            return 'Invalid Date';
+        }
+    }
+
+    showError(message) {
+        const container = document.getElementById('alert-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    ${message}
+                </div>
+            `;
+        }
+    }
+
+    showToast(message) {
+        // Simple toast notification
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        toast.innerHTML = `<i class="fas fa-check mr-2"></i>${message}`;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    new TripDetailsManager();
+});
+</script>
+{% endblock %} 

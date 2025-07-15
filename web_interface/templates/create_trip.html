@@ -392,6 +392,19 @@ class TripCreator {
             if (user.employee_id && user.employee_name) {
                 document.getElementById('employee-id').value = user.employee_id;
                 document.getElementById('employee-name').value = user.employee_name;
+                
+                // Try to get the numeric ID from backend
+                try {
+                    const res = await fetch('/api/employees/' + encodeURIComponent(user.employee_id));
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.employee) {
+                            document.getElementById('employee-id').dataset.numericId = data.employee.id;
+                            document.getElementById('employee-name').dataset.isValid = 'true';
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+                
                 document.getElementById('employee-id').readOnly = true;
                 document.getElementById('employee-name').readOnly = true;
             } else {
@@ -404,6 +417,8 @@ class TripCreator {
                             const emp = data.employees[0];
                             document.getElementById('employee-id').value = emp.employee_id;
                             document.getElementById('employee-name').value = emp.name;
+                            document.getElementById('employee-id').dataset.numericId = emp.id;
+                            document.getElementById('employee-name').dataset.isValid = 'true';
                             document.getElementById('employee-id').readOnly = true;
                             document.getElementById('employee-name').readOnly = true;
                         }
@@ -583,6 +598,11 @@ class TripCreator {
     selectEmployee(employee) {
         document.getElementById('employee-name').value = employee.name;
         document.getElementById('employee-id').value = employee.employee_id;
+        
+        // Store the numeric ID for backend submission
+        document.getElementById('employee-id').dataset.numericId = employee.id;
+        document.getElementById('employee-name').dataset.isValid = 'true';
+        
         this.hideEmployeeDropdown();
         this.validateForm();
     }
@@ -593,6 +613,7 @@ class TripCreator {
 
     async handleEmployeeIdInput(employeeId) {
         const employeeNameInput = document.getElementById('employee-name');
+        const employeeIdInput = document.getElementById('employee-id');
         
         if (employeeId.length >= 3) {
             try {
@@ -601,19 +622,32 @@ class TripCreator {
                     const data = await response.json();
                     if (data.employee) {
                         employeeNameInput.value = data.employee.name;
+                        
+                        // Store the numeric ID for backend submission
+                        employeeIdInput.dataset.numericId = data.employee.id;
+                        employeeNameInput.dataset.isValid = 'true';
+                        
                         this.hideEmployeeDropdown();
                     } else {
                         employeeNameInput.value = '';
+                        employeeIdInput.dataset.numericId = '';
+                        employeeNameInput.dataset.isValid = 'false';
                     }
                 } else {
                     employeeNameInput.value = '';
+                    employeeIdInput.dataset.numericId = '';
+                    employeeNameInput.dataset.isValid = 'false';
                 }
             } catch (error) {
                 console.error('Error fetching employee:', error);
                 employeeNameInput.value = '';
+                employeeIdInput.dataset.numericId = '';
+                employeeNameInput.dataset.isValid = 'false';
             }
         } else {
             employeeNameInput.value = '';
+            employeeIdInput.dataset.numericId = '';
+            employeeNameInput.dataset.isValid = 'false';
         }
         this.validateForm();
     }
@@ -643,16 +677,23 @@ class TripCreator {
             return field && field.value.trim() !== '';
         });
 
-        // Additional validation for employee ID - must be a valid integer
-        const employeeId = document.getElementById('employee-id').value;
-        const isValidEmployeeId = employeeId && !isNaN(parseInt(employeeId));
+        // Additional validation for employee ID - check if employee was properly selected
+        const employeeId = document.getElementById('employee-id').value.trim();
+        const employeeName = document.getElementById('employee-name').value.trim();
+        const employeeIdField = document.getElementById('employee-id');
+        const employeeNameField = document.getElementById('employee-name');
+        
+        // Valid if both employee ID and name are provided and a numeric ID is stored
+        const hasNumericId = employeeIdField.dataset.numericId && employeeIdField.dataset.numericId !== '';
+        const isValidEmployeeId = employeeId && employeeName && hasNumericId;
 
         const isFormValid = allValid && isValidEmployeeId;
         document.getElementById('next-step').disabled = !isFormValid;
 
         // Update button text based on validation state
+        console.log(employeeId, employeeName, hasNumericId, isValidEmployeeId);
         const nextButton = document.getElementById('next-step');
-        if (!isValidEmployeeId && employeeId) {
+        if (!isValidEmployeeId) {
             nextButton.textContent = 'Please select valid employee';
         } else {
             nextButton.textContent = 'Review Trip Details';
@@ -759,7 +800,14 @@ class TripCreator {
             return;
         }
 
-        const employeeId = parseInt(employeeIdField.value);
+        // Use the stored numeric ID for backend submission
+        const numericEmployeeId = employeeIdField.dataset.numericId;
+        if (!numericEmployeeId || numericEmployeeId === '') {
+            alert('Invalid employee selection. Please select an employee from the search results.');
+            return;
+        }
+
+        const employeeId = parseInt(numericEmployeeId);
         if (isNaN(employeeId)) {
             alert('Invalid employee ID. Please select an employee from the search results.');
             return;

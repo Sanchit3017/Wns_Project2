@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}Trip History - WNS Transport Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .trip-card {
+        transition: all 0.3s ease;
+    }
+    
+    .trip-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .status-badge {
+        animation: pulse 2s infinite;
+    }
+    
+    .filter-tab.active {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    }
+    
+    .loading-spinner {
+        border: 3px solid #f3f4f6;
+        border-top: 3px solid #3b82f6;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="mb-8">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">
+                <i class="fas fa-history text-wns-blue mr-3"></i>
+                Trip History
+            </h1>
+            <p class="text-gray-600 mt-1">View and manage all trip records</p>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-sm text-gray-600">Live Updates</span>
+            </div>
+            <button onclick="window.location.href='/trips/create'" 
+                    class="bg-wns-blue hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center">
+                <i class="fas fa-plus mr-2"></i>New Trip
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Controls -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-900">
+                        <i class="fas fa-history text-wns-blue mr-3"></i>Trip History
+                    </h2>
+                    <div class="flex space-x-4">
+                        <!-- Status Filter -->
+                        <select id="status-filter" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wns-blue">
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <!-- Refresh Button -->
+                        <button id="refresh-btn" class="bg-wns-blue hover:bg-wns-light-blue text-white px-4 py-2 rounded-lg transition duration-200">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading" class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-3xl text-wns-blue mb-2"></i>
+                    <p class="text-gray-600">Loading trip history...</p>
+                </div>
+
+                <!-- No Trips Message -->
+                <div id="no-trips" class="text-center py-8 hidden">
+                    <i class="fas fa-route text-6xl text-gray-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-600 mb-2">No trips found</h3>
+                    <p class="text-gray-500">You haven't taken any trips yet.</p>
+                    <a href="/trips/create" class="inline-block mt-4 bg-wns-orange hover:bg-orange-600 text-white px-6 py-2 rounded-lg transition duration-200">
+                        Book Your First Trip
+                    </a>
+                </div>
+
+                <!-- Trips Table -->
+                <div id="trips-container" class="hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trip ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trips-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Trips will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Admin Analytics (if admin) -->
+                <div id="admin-analytics" class="hidden mt-8">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-chart-bar text-wns-blue mr-2"></i>Trip Analytics
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-blue-600" id="total-trips">-</div>
+                            <div class="text-sm text-gray-600">Total Trips</div>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-green-600" id="completed-trips">-</div>
+                            <div class="text-sm text-gray-600">Completed</div>
+                        </div>
+                        <div class="bg-yellow-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-yellow-600" id="pending-trips">-</div>
+                            <div class="text-sm text-gray-600">Pending</div>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-red-600" id="cancelled-trips">-</div>
+                            <div class="text-sm text-gray-600">Cancelled</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    class TripHistoryManager {
+            constructor() {
+                this.currentUser = this.getUserInfo();
+                this.currentFilter = 'all';
+                this.init();
+            }
+
+            getUserInfo() {
+                const userInfo = localStorage.getItem('user_info');
+                if (userInfo) {
+                    try {
+                        return JSON.parse(userInfo);
+                    } catch (e) {
+                        console.error('Failed to parse user info:', e);
+                    }
+                }
+                return { role: 'employee', id: 1, email: 'user@travel.com' };
+            }
+
+            init() {
+                this.bindEvents();
+                this.loadTrips();
+            }
+
+            bindEvents() {
+                document.getElementById('refresh-btn').addEventListener('click', () => {
+                    this.loadTrips();
+                });
+
+                document.getElementById('status-filter').addEventListener('change', (e) => {
+                    this.currentFilter = e.target.value;
+                    this.loadTrips();
+                });
+            }
+
+            async loadTrips() {
+                this.showLoading();
+
+                try {
+                    const params = new URLSearchParams({
+                        user_id: this.currentUser.id || 1,
+                        role: this.currentUser.role || 'employee',
+                        status: this.currentFilter
+                    });
+
+                    const response = await fetch(`/api/trips/history?${params}`);
+                    const data = await response.json();
+
+                    this.displayTrips(data.trips || []);
+                    
+                    if (data.role === 'admin' && data.analytics) {
+                        this.displayAnalytics(data.analytics);
+                    }
+
+                } catch (error) {
+                    console.error('Error loading trips:', error);
+                    this.showError('Failed to load trip history. Please try again.');
+                }
+            }
+
+            showLoading() {
+                document.getElementById('loading').classList.remove('hidden');
+                document.getElementById('trips-container').classList.add('hidden');
+                document.getElementById('no-trips').classList.add('hidden');
+                document.getElementById('admin-analytics').classList.add('hidden');
+            }
+
+            displayTrips(trips) {
+                document.getElementById('loading').classList.add('hidden');
+
+                if (trips.length === 0) {
+                    document.getElementById('no-trips').classList.remove('hidden');
+                    document.getElementById('trips-container').classList.add('hidden');
+                    return;
+                }
+
+                document.getElementById('no-trips').classList.add('hidden');
+                document.getElementById('trips-container').classList.remove('hidden');
+
+                const tbody = document.getElementById('trips-table-body');
+                tbody.innerHTML = '';
+
+                trips.forEach(trip => {
+                    const row = this.createTripRow(trip);
+                    tbody.appendChild(row);
+                });
+            }
+
+            createTripRow(trip) {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+
+                const statusClass = this.getStatusClass(trip.status);
+                const statusIcon = this.getStatusIcon(trip.status);
+
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        #${trip.id || 'N/A'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div class="flex items-center">
+                            <i class="fas fa-map-marker-alt text-green-500 mr-2"></i>
+                            <span class="truncate max-w-xs" title="${trip.pickup_location || 'N/A'}">${trip.pickup_location || 'N/A'}</span>
+                        </div>
+                        <div class="flex items-center mt-1">
+                            <i class="fas fa-flag-checkered text-red-500 mr-2"></i>
+                            <span class="truncate max-w-xs" title="${trip.destination || 'N/A'}">${trip.destination || 'N/A'}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div>${this.formatDate(trip.scheduled_time)}</div>
+                        <div class="text-xs text-gray-500">${this.formatTime(trip.scheduled_time)}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${trip.employee_name || trip.employee_id || 'N/A'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${trip.driver_name || trip.driver_id || 'Unassigned'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+                            <i class="${statusIcon} mr-1"></i>
+                            ${trip.status || 'unknown'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button class="text-wns-blue hover:text-wns-light-blue" onclick="tripHistory.viewTrip(${trip.id})" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${trip.status === 'in_progress' ? `
+                                <button class="text-green-600 hover:text-green-800" onclick="tripHistory.trackTrip(${trip.id})" title="Track Trip">
+                                    <i class="fas fa-route"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                `;
+
+                return row;
+            }
+
+            displayAnalytics(analytics) {
+                document.getElementById('admin-analytics').classList.remove('hidden');
+                document.getElementById('total-trips').textContent = analytics.total_trips || 0;
+                document.getElementById('completed-trips').textContent = analytics.completed_trips || 0;
+                document.getElementById('pending-trips').textContent = analytics.pending_trips || 0;
+                document.getElementById('cancelled-trips').textContent = analytics.cancelled_trips || 0;
+            }
+
+            getStatusClass(status) {
+                const statusClasses = {
+                    'pending': 'bg-yellow-100 text-yellow-800',
+                    'in_progress': 'bg-blue-100 text-blue-800',
+                    'completed': 'bg-green-100 text-green-800',
+                    'cancelled': 'bg-red-100 text-red-800'
+                };
+                return statusClasses[status] || 'bg-gray-100 text-gray-800';
+            }
+
+            getStatusIcon(status) {
+                const statusIcons = {
+                    'pending': 'fas fa-clock',
+                    'in_progress': 'fas fa-spinner',
+                    'completed': 'fas fa-check-circle',
+                    'cancelled': 'fas fa-times-circle'
+                };
+                return statusIcons[status] || 'fas fa-question-circle';
+            }
+
+            formatDate(dateString) {
+                if (!dateString) return 'N/A';
+                try {
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString();
+                } catch (e) {
+                    return 'Invalid Date';
+                }
+            }
+
+            formatTime(dateString) {
+                if (!dateString) return 'N/A';
+                try {
+                    const date = new Date(dateString);
+                    return date.toLocaleTimeString();
+                } catch (e) {
+                    return 'Invalid Time';
+                }
+            }
+
+            viewTrip(tripId) {
+                // Navigate to trip details page
+                window.location.href = `/trips/${tripId}`;
+            }
+
+            trackTrip(tripId) {
+                window.location.href = `/tracking?trip_id=${tripId}`;
+            }
+
+            showError(message) {
+                document.getElementById('loading').classList.add('hidden');
+                // You can implement a proper error display here
+                alert(message);
+            }
+        }
+
+        // Initialize when page loads
+        let tripHistory;
+        document.addEventListener('DOMContentLoaded', function() {
+            tripHistory = new TripHistoryManager();
+        });
+</script>
+{% endblock %} 
