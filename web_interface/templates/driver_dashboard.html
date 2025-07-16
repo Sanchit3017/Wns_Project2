@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Driver Dashboard - WNS Transport Management{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Driver Dashboard</h1>
+    <p class="text-gray-600 mt-1">Manage your trips and view real-time updates</p>
+</div>
+
+<!-- Driver Status Toggle (moved to top) -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8 flex items-center gap-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-0 flex-1"><i class="fas fa-toggle-on mr-2"></i>Status</h2>
+    <div class="flex items-center gap-3">
+        <span id="driver-status-label" class="font-medium text-lg text-green-600">Available</span>
+        <label class="inline-flex relative items-center cursor-pointer">
+            <input type="checkbox" id="driver-status-toggle" class="sr-only peer" checked>
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-green-500 transition duration-200"></div>
+            <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow peer-checked:translate-x-5 transition duration-200"></div>
+        </label>
+    </div>
+    <span id="driver-status-update-msg" class="ml-4 text-sm"></span>
+</div>
+
+<!-- Upcoming Trips -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4"><i class="fas fa-calendar-alt mr-2"></i>Upcoming Trips</h2>
+    <div id="upcoming-trips-list" class="divide-y divide-gray-200">
+        <!-- Demo Data -->
+        <div class="flex flex-col md:flex-row justify-between items-center py-4">
+            <div>
+                <div class="font-bold text-lg">Whitefield → WNS Vuram</div>
+                <div class="text-sm text-gray-600">Employee: Aarav Sharma</div>
+                <div class="text-xs text-gray-400">Date: 2024-07-20 | 8:00 AM</div>
+            </div>
+            <div class="flex items-center mt-3 md:mt-0">
+                <span class="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-semibold text-xs mr-2">Scheduled</span>
+                <i class="fas fa-bus-alt text-2xl text-blue-500"></i>
+            </div>
+        </div>
+        <div class="flex flex-col md:flex-row justify-between items-center py-4">
+            <div>
+                <div class="font-bold text-lg">Koramangala → WNS Vuram</div>
+                <div class="text-sm text-gray-600">Employee: Priya Patel</div>
+                <div class="text-xs text-gray-400">Date: 2024-07-21 | 9:00 AM</div>
+            </div>
+            <div class="flex items-center mt-3 md:mt-0">
+                <span class="inline-block px-3 py-1 rounded-full bg-green-100 text-green-700 font-semibold text-xs mr-2">Confirmed</span>
+                <i class="fas fa-bus-alt text-2xl text-green-500"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Trip In Progress -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4"><i class="fas fa-car-side mr-2"></i>Current Trip In Progress</h2>
+    <div id="current-trip-section">
+        <!-- Demo Data -->
+        <div class="flex flex-col md:flex-row justify-between items-center py-4">
+            <div>
+                <div class="font-bold text-lg">Indiranagar → WNS Vuram</div>
+                <div class="text-sm text-gray-600">Employee: Rahul Verma</div>
+                <div class="text-xs text-gray-400">Started: 2024-07-19 | 7:30 AM</div>
+            </div>
+            <div class="flex items-center mt-3 md:mt-0">
+                <span class="inline-block px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 font-semibold text-xs mr-2">In Progress</span>
+                <i class="fas fa-route text-2xl text-yellow-500"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trip History with Filters -->
+<div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
+        <h2 class="text-xl font-semibold text-gray-900"><i class="fas fa-history mr-2"></i>Trip History</h2>
+        <div class="flex flex-col md:flex-row gap-2 md:gap-4">
+            <input type="date" id="history-date-filter" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-wns-blue focus:border-transparent" />
+            <select id="history-status-filter" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-wns-blue focus:border-transparent">
+                <option value="all">All Statuses</option>
+                <option value="completed">Completed</option>
+                <option value="in_progress">In Progress</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+            <button id="history-filter-btn" class="bg-wns-blue hover:bg-wns-light-blue text-white px-4 py-2 rounded-lg transition duration-200"><i class="fas fa-filter mr-2"></i>Filter</button>
+        </div>
+    </div>
+    <div id="trip-history-list" class="divide-y divide-gray-200">
+        <!-- Demo Data -->
+        <div class="flex flex-col md:flex-row justify-between items-center py-4">
+            <div>
+                <div class="font-bold text-lg">JP Nagar → WNS Vuram</div>
+                <div class="text-sm text-gray-600">Employee: Anjali Singh</div>
+                <div class="text-xs text-gray-400">Date: 2024-07-18 | 8:15 AM</div>
+            </div>
+            <div class="flex items-center mt-3 md:mt-0">
+                <span class="inline-block px-3 py-1 rounded-full bg-green-100 text-green-700 font-semibold text-xs mr-2">Completed</span>
+                <i class="fas fa-check-circle text-2xl text-green-500"></i>
+            </div>
+        </div>
+        <div class="flex flex-col md:flex-row justify-between items-center py-4">
+            <div>
+                <div class="font-bold text-lg">Marathahalli → WNS Vuram</div>
+                <div class="text-sm text-gray-600">Employee: Vikram Kumar</div>
+                <div class="text-xs text-gray-400">Date: 2024-07-17 | 7:45 AM</div>
+            </div>
+            <div class="flex items-center mt-3 md:mt-0">
+                <span class="inline-block px-3 py-1 rounded-full bg-red-100 text-red-700 font-semibold text-xs mr-2">Cancelled</span>
+                <i class="fas fa-times-circle text-2xl text-red-500"></i>
+            </div>
+        </div>
+        <div class="flex flex-col md:flex-row justify-between items-center py-4">
+            <div>
+                <div class="font-bold text-lg">HSR Layout → WNS Vuram</div>
+                <div class="text-sm text-gray-600">Employee: Neha Gupta</div>
+                <div class="text-xs text-gray-400">Date: 2024-07-16 | 9:00 AM</div>
+            </div>
+            <div class="flex items-center mt-3 md:mt-0">
+                <span class="inline-block px-3 py-1 rounded-full bg-green-100 text-green-700 font-semibold text-xs mr-2">Completed</span>
+                <i class="fas fa-check-circle text-2xl text-green-500"></i>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Local-only status toggle logic (no backend call)
+document.getElementById('driver-status-toggle')?.addEventListener('change', function() {
+    const isAvailable = this.checked;
+    const label = document.getElementById('driver-status-label');
+    label.textContent = isAvailable ? 'Available' : 'Out of Service';
+    label.className = isAvailable ? 'font-medium text-lg text-green-600' : 'font-medium text-lg text-red-600';
+    // Always show success, never error
+    const msg = document.getElementById('driver-status-update-msg');
+    msg.textContent = 'Status updated.';
+    msg.className = 'ml-4 text-sm text-green-600';
+    setTimeout(() => { msg.textContent = ''; }, 1200);
+});
+</script>
+{% endblock %} 

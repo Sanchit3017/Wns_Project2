@@ -143,65 +143,80 @@
                 </a>
             </div>
         </div>
-
-        <!-- System Status -->
-        <div class="bg-white rounded-xl shadow-lg p-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">System Status</h3>
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-gray-600">API Gateway</span>
-                    <div class="flex items-center">
-                        <div class="h-2 w-2 bg-green-500 rounded-full mr-2"></div>
-                        <span class="text-sm text-green-600">Online</span>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-gray-600">Auth Service</span>
-                    <div class="flex items-center">
-                        <div class="h-2 w-2 bg-green-500 rounded-full mr-2"></div>
-                        <span class="text-sm text-green-600">Online</span>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-gray-600">Trip Service</span>
-                    <div class="flex items-center">
-                        <div class="h-2 w-2 bg-green-500 rounded-full mr-2"></div>
-                        <span class="text-sm text-green-600">Online</span>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-gray-600">Database</span>
-                    <div class="flex items-center">
-                        <div class="h-2 w-2 bg-green-500 rounded-full mr-2"></div>
-                        <span class="text-sm text-green-600">Connected</span>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
-<!-- Analytics Section -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-    <!-- Trip Analytics Chart -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
-        <h3 class="text-lg font-bold text-gray-900 mb-4">Trip Analytics</h3>
-        <div class="h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
-            <div class="text-center">
-                <i class="fas fa-chart-line text-4xl text-gray-400 mb-2"></i>
-                <p class="text-gray-500">Chart will be implemented here</p>
+<!-- Bengaluru Service Map -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-map-marked-alt mr-2 text-wns-blue"></i>
+            Bengaluru Service Coverage Map
+        </h2>
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span class="text-sm text-gray-600">Service Areas</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span class="text-sm text-gray-600">Active Drivers</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
+                <span class="text-sm text-gray-600">WNS Offices</span>
             </div>
         </div>
     </div>
+    <div id="bengaluru-map" class="h-96 rounded-lg border border-gray-200"></div>
+</div>
 
-    <!-- User Growth Chart -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
-        <h3 class="text-lg font-bold text-gray-900 mb-4">User Growth</h3>
-        <div class="h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
-            <div class="text-center">
-                <i class="fas fa-chart-bar text-4xl text-gray-400 mb-2"></i>
-                <p class="text-gray-500">Chart will be implemented here</p>
+<!-- Analytics Section -->
+
+
+<!-- WNS Transport Policy & Guidelines Section -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="flex items-center mb-6">
+        <i class="fas fa-info-circle text-2xl text-wns-blue mr-2"></i>
+        <h2 class="text-lg font-bold text-gray-900">WNS Transport Policy & Guidelines</h2>
+    </div>
+    <hr class="mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <!-- Operating Hours -->
+        <div class="flex flex-col items-center">
+            <div class="w-14 h-14 flex items-center justify-center rounded-full bg-blue-100 mb-3">
+                <i class="fas fa-clock text-2xl text-blue-500"></i>
             </div>
+            <div class="font-semibold text-gray-900 mb-1">Operating Hours</div>
+            <div class="text-gray-700 text-sm mb-1">06:30 - 20:30</div>
+            <div class="text-xs text-gray-400">Sociable hours only</div>
+        </div>
+        <!-- Pre-Login Buffer -->
+        <div class="flex flex-col items-center">
+            <div class="w-14 h-14 flex items-center justify-center rounded-full bg-green-100 mb-3">
+                <i class="fas fa-key text-2xl text-green-500"></i>
+            </div>
+            <div class="font-semibold text-gray-900 mb-1">Pre-Login Buffer</div>
+            <div class="text-gray-700 text-sm mb-1">15 minutes</div>
+            <div class="text-xs text-gray-400">Before shift start</div>
+        </div>
+        <!-- Post-Logout Buffer -->
+        <div class="flex flex-col items-center">
+            <div class="w-14 h-14 flex items-center justify-center rounded-full bg-orange-100 mb-3">
+                <i class="fas fa-sign-out-alt text-2xl text-orange-500"></i>
+            </div>
+            <div class="font-semibold text-gray-900 mb-1">Post-Logout Buffer</div>
+            <div class="text-gray-700 text-sm mb-1">20 minutes</div>
+            <div class="text-xs text-gray-400">After shift end</div>
+        </div>
+        <!-- Zone Coverage -->
+        <div class="flex flex-col items-center">
+            <div class="w-14 h-14 flex items-center justify-center rounded-full bg-purple-100 mb-3">
+                <i class="fas fa-shield-alt text-2xl text-purple-500"></i>
+            </div>
+            <div class="font-semibold text-gray-900 mb-1">Zone Coverage</div>
+            <div class="text-gray-700 text-sm mb-1">5 Active Zones</div>
+            <div class="text-xs text-gray-400">Across Bangalore</div>
         </div>
     </div>
 </div>
@@ -228,6 +243,9 @@ class AdminDashboard {
         this.initializeComponents();
         this.loadDashboardData();
         this.setupRealTimeUpdates();
+        this.initializeBengaluruMap(); // Initialize map on page load
+        // Expose refresh function globally
+        window.refreshAdminRecentTrips = this.loadRecentTrips.bind(this);
     }
 
     initializeComponents() {
@@ -253,14 +271,14 @@ class AdminDashboard {
             const response = await fetch('/api/admin/dashboard/kpis');
             if (response.ok) {
                 const data = await response.json();
-                document.getElementById('active-trips').textContent = data.active_trips || 0;
+                // Show total users as count of employees
                 document.getElementById('total-users').textContent = data.total_users || 0;
+                // Show available drivers as count of available drivers
                 document.getElementById('available-drivers').textContent = data.available_drivers || 0;
             }
         } catch (error) {
             console.error('Error loading KPIs:', error);
             // Set default values
-            document.getElementById('active-trips').textContent = '0';
             document.getElementById('total-users').textContent = '0';
             document.getElementById('available-drivers').textContent = '0';
         }
@@ -339,6 +357,113 @@ class AdminDashboard {
             this.loadRecentTrips();
         }, 30000);
     }
+
+    initializeBengaluruMap() {
+        // Initialize the map centered on Bengaluru
+        const map = L.map('bengaluru-map').setView([12.9716, 77.5946], 11);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Bengaluru service areas and key locations
+        const serviceAreas = [
+            { name: 'Whitefield', coords: [12.9692, 77.7499], type: 'service', color: 'blue' },
+            { name: 'Koramangala', coords: [12.9349, 77.6055], type: 'service', color: 'blue' },
+            { name: 'Indiranagar', coords: [12.9789, 77.6408], type: 'service', color: 'blue' },
+            { name: 'JP Nagar', coords: [12.9067, 77.5851], type: 'service', color: 'blue' },
+            { name: 'Marathahalli', coords: [12.9589, 77.7014], type: 'service', color: 'blue' },
+            { name: 'Electronic City', coords: [12.8458, 77.6655], type: 'service', color: 'blue' },
+            { name: 'Bellandur', coords: [12.9352, 77.6784], type: 'service', color: 'blue' },
+            { name: 'HSR Layout', coords: [12.9141, 77.6416], type: 'service', color: 'blue' }
+        ];
+
+        const wnsOffices = [
+            { name: 'WNS Global Services - Whitefield', coords: [12.9692, 77.7499], type: 'office', color: 'purple' },
+            { name: 'WNS Vuram - Koramangala', coords: [12.9349, 77.6055], type: 'office', color: 'purple' },
+            { name: 'WNS Corporate Office - Indiranagar', coords: [12.9789, 77.6408], type: 'office', color: 'purple' }
+        ];
+
+        const activeDrivers = [
+            { name: 'Ravi Kumar', coords: [12.9692, 77.7499], type: 'driver', color: 'green' },
+            { name: 'Sunil Sharma', coords: [12.9349, 77.6055], type: 'driver', color: 'green' },
+            { name: 'Priya Singh', coords: [12.9789, 77.6408], type: 'driver', color: 'green' },
+            { name: 'Amit Patel', coords: [12.9067, 77.5851], type: 'driver', color: 'green' },
+            { name: 'Meena Joshi', coords: [12.9589, 77.7014], type: 'driver', color: 'green' }
+        ];
+
+        // Add service area markers
+        serviceAreas.forEach(area => {
+            const marker = L.marker(area.coords).addTo(map);
+            marker.bindPopup(`
+                <div class="text-center">
+                    <h3 class="font-bold text-blue-600">${area.name}</h3>
+                    <p class="text-sm text-gray-600">Service Area</p>
+                    <p class="text-xs text-gray-500">Coverage Zone</p>
+                </div>
+            `);
+        });
+
+        // Add WNS office markers
+        wnsOffices.forEach(office => {
+            const marker = L.marker(office.coords, {
+                icon: L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div style="background-color: purple; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                })
+            }).addTo(map);
+            marker.bindPopup(`
+                <div class="text-center">
+                    <h3 class="font-bold text-purple-600">${office.name}</h3>
+                    <p class="text-sm text-gray-600">WNS Office</p>
+                </div>
+            `);
+        });
+
+        // Add active driver markers
+        activeDrivers.forEach(driver => {
+            const marker = L.marker(driver.coords, {
+                icon: L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div style="background-color: green; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white;"></div>`,
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8]
+                })
+            }).addTo(map);
+            marker.bindPopup(`
+                <div class="text-center">
+                    <h3 class="font-bold text-green-600">${driver.name}</h3>
+                    <p class="text-sm text-gray-600">Available Driver</p>
+                    <p class="text-xs text-gray-500">Ready for assignment</p>
+                </div>
+            `);
+        });
+
+        // Add service area polygons (simplified rectangles for demo)
+        const serviceZones = [
+            { name: 'Whitefield Zone', coords: [[12.9592, 77.7399], [12.9792, 77.7599]] },
+            { name: 'Koramangala Zone', coords: [[12.9249, 77.5955], [12.9449, 77.6155]] },
+            { name: 'Indiranagar Zone', coords: [[12.9689, 77.6308], [12.9889, 77.6508]] }
+        ];
+
+        serviceZones.forEach(zone => {
+            const polygon = L.rectangle(zone.coords, {
+                color: 'blue',
+                weight: 2,
+                fillColor: 'blue',
+                fillOpacity: 0.1
+            }).addTo(map);
+            polygon.bindPopup(`
+                <div class="text-center">
+                    <h3 class="font-bold text-blue-600">${zone.name}</h3>
+                    <p class="text-sm text-gray-600">Service Coverage Area</p>
+                </div>
+            `);
+        });
+    }
 }
 
 // Global functions
@@ -357,20 +482,14 @@ async function loadUserList(type) {
     section.innerHTML = '<div class="text-center text-gray-500 py-4"><i class="fas fa-spinner fa-spin text-xl mb-2"></i> Loading...</div>';
     let url = '';
     if (type === 'employee') {
-        url = '/api/employees/search?q=a'; // broad search for all
+        url = '/api/employees'; // fetch all employees
     } else if (type === 'driver') {
-        url = '/api/users/drivers';
+        url = '/api/drivers'; // fetch all drivers
     }
     try {
         const res = await fetch(url);
         if (res.ok) {
-            const data = await res.json();
-            let users = [];
-            if (type === 'employee') {
-                users = data.employees || [];
-            } else if (type === 'driver') {
-                users = data.drivers || data || [];
-            }
+            const users = await res.json();
             if (users.length === 0) {
                 section.innerHTML = '<p class="text-gray-500">No users found.</p>';
                 return;

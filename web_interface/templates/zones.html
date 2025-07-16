@@ -344,6 +344,23 @@
     </div>
 </div>
 
+<!-- Zone Map Modal -->
+<div id="zone-map-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-screen overflow-y-auto relative">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-900" id="map-modal-zone-title">Zone Map</h2>
+                <button id="close-map-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div id="zone-leaflet-map" style="height: 400px; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // Zones Page JavaScript
 class ZonesManager {
@@ -551,10 +568,10 @@ function viewZoneDetails(zoneName) {
             </div>
             
             <div class="flex space-x-4">
-                <button class="flex-1 bg-wns-blue hover:bg-wns-light-blue text-white py-2 px-4 rounded-lg transition duration-200">
+                <button class="flex-1 bg-wns-blue hover:bg-wns-light-blue text-white py-2 px-4 rounded-lg transition duration-200" onclick="redirectToCreateTrip('${zoneName}')">
                     <i class="fas fa-plus mr-2"></i>Create Trip from ${zoneName}
                 </button>
-                <button class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition duration-200">
+                <button id="view-map-btn-${zoneName}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition duration-200" onclick="openZoneMapModal('${zoneName}', this)">
                     <i class="fas fa-map mr-2"></i>View on Map
                 </button>
             </div>
@@ -562,6 +579,132 @@ function viewZoneDetails(zoneName) {
     `;
     
     modal.classList.remove('hidden');
+}
+
+// --- NEW: Zone Map Modal HTML --- //
+const mapModalHtml = `
+<div id="zone-map-modal" class="fixed inset-0 bg-black bg-opacity-50 z-60 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-screen overflow-y-auto relative">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-900" id="map-modal-zone-title">Zone Map</h2>
+                <button id="close-map-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div id="zone-leaflet-map" style="height: 400px; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+`;
+if (!document.getElementById('zone-map-modal')) {
+    document.body.insertAdjacentHTML('beforeend', mapModalHtml);
+}
+
+// --- Area Coordinates Mapping (approximate for Bangalore) --- //
+const AREA_COORDS = {
+    'Yelahanka': [13.1007, 77.5963], 'Whitefield': [12.9698, 77.7499], 'Hoskote': [13.0707, 77.7981],
+    'Kadugodi': [12.9966, 77.7636], 'Channasandra': [13.0122, 77.7476], 'TC Palya': [13.0282, 77.7116],
+    'Kithaganur': [13.0212, 77.7322], 'MS Palya': [13.0802, 77.5485], 'Hennur Bagalur': [13.0722, 77.6522],
+    'K Channasandra': [13.0222, 77.7500], 'Varthur': [12.9381, 77.7477], 'Gunjur': [12.9366, 77.7632],
+    'Chikka Bellandur': [12.9000, 77.7280],
+    'Kengeri': [12.9177, 77.4865], 'Nagarbhavi': [12.9719, 77.5121], 'Raja-Rajeshwari Nagar': [12.9367, 77.5196],
+    'Bangalore University': [12.9452, 77.5091], 'Janapriya Township': [12.9540, 77.5010], 'Jnanabharathi': [12.9452, 77.5055],
+    'Malathalli': [12.9692, 77.5122], 'Chandra Layout': [12.9677, 77.5282], 'Attiguppe': [12.9672, 77.5332],
+    'RPC Layout': [12.9672, 77.5412], 'Annapoorneshwari Nagar': [12.9612, 77.5022], 'Kottigepalya': [12.9782, 77.4952],
+    'Kamakshipalya': [12.9832, 77.5202], 'Sundkadakatte': [12.9902, 77.4802], 'Kadabgere': [12.9952, 77.4702],
+    'Laggere': [13.0112, 77.5302], 'Hesarghatta Main Road': [13.0852, 77.5042], '8th Mile Signal': [13.0502, 77.5152],
+    'T. Dasarahalli': [13.0602, 77.5112], 'Abiigere': [13.0702, 77.5202], 'Kammagonadahalli': [13.0802, 77.5302],
+    'Mathikere': [13.0452, 77.5562], 'Yeshwathpur': [13.0282, 77.5402],
+    'JP Nagar 9th Phase': [12.8912, 77.5852], 'Electronic City': [12.8452, 77.6602], 'Hulimavu': [12.8822, 77.6102],
+    'Konanakunte': [12.8822, 77.5602], 'Uttarahalli': [12.9052, 77.5452], 'Chikkakalasandra': [12.9152, 77.5452],
+    'Ittamadu': [12.9252, 77.5452], 'Girinagar': [12.9352, 77.5452], 'Meenakshi Nagar': [12.9452, 77.5452],
+    'Hebbagodi Police Station': [12.8232, 77.6842], 'Central Jail': [12.8202, 77.6802], 'Hosar Road': [12.9002, 77.7002],
+    'Surjapur Road': [12.9102, 77.7102], 'Choodsandra Circle': [12.9202, 77.7202], 'Kaikindrahalli': [12.9302, 77.7302],
+    'Hosapalya': [12.9402, 77.7402],
+    'Binny Pete': [12.9716, 77.5616], 'Cotton Pete': [12.9716, 77.5716], 'Chickpet': [12.9716, 77.5816]
+};
+
+// --- Open Zone Map Modal and Render Map --- //
+function openZoneMapModal(zoneName, btn) {
+    // Get zone areas from BANGALORE_ZONES (simulate fetch or use static)
+    const zoneAreas = (window.BANGALORE_ZONES && window.BANGALORE_ZONES[zoneName]?.areas) || [];
+    const coords = zoneAreas
+        .map(area => AREA_COORDS[area])
+        .filter(Boolean);
+    if (coords.length === 0) {
+        alert('No coordinates available for this zone.');
+        return;
+    }
+    // Set modal title
+    document.getElementById('map-modal-zone-title').textContent = `${zoneName} Zone Map`;
+    // Show modal
+    document.getElementById('zone-map-modal').classList.remove('hidden');
+    // Visually push details modal to background
+    document.getElementById('zone-modal')?.classList.add('modal-blur');
+    // Disable the button while map is open
+    if (btn) {
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+    // Store reference to re-enable later
+    window._lastViewMapBtn = btn;
+    // Wait for modal to be visible, then render map
+    setTimeout(() => renderZoneMap(zoneName, coords, zoneAreas), 100);
+}
+
+// --- Render Leaflet Map for Zone --- //
+let zoneLeafletMap = null;
+function renderZoneMap(zoneName, coords, areaNames) {
+    if (zoneLeafletMap) {
+        zoneLeafletMap.remove();
+        zoneLeafletMap = null;
+    }
+    // Center on average
+    const avgLat = coords.reduce((sum, c) => sum + c[0], 0) / coords.length;
+    const avgLng = coords.reduce((sum, c) => sum + c[1], 0) / coords.length;
+    zoneLeafletMap = L.map('zone-leaflet-map').setView([avgLat, avgLng], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(zoneLeafletMap);
+    // Add markers
+    coords.forEach((c, i) => {
+        L.marker(c).addTo(zoneLeafletMap).bindPopup(`<b>${areaNames[i]}</b>`);
+    });
+}
+
+// --- Close Map Modal --- //
+document.getElementById('close-map-modal').addEventListener('click', () => {
+    document.getElementById('zone-map-modal').classList.add('hidden');
+    if (zoneLeafletMap) {
+        zoneLeafletMap.remove();
+        zoneLeafletMap = null;
+    }
+    // Re-enable the button when modal is closed
+    if (window._lastViewMapBtn) {
+        window._lastViewMapBtn.disabled = false;
+        window._lastViewMapBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        window._lastViewMapBtn = null;
+    }
+    // Remove blur from details modal
+    document.getElementById('zone-modal')?.classList.remove('modal-blur');
+});
+
+// --- Make BANGALORE_ZONES available in JS --- //
+window.BANGALORE_ZONES = {
+    "East": {"areas": ["Yelahanka", "Whitefield", "Hoskote", "Kadugodi", "Channasandra", "TC Palya", "Kithaganur", "MS Palya", "Hennur Bagalur", "K Channasandra", "Varthur", "Gunjur", "Chikka Bellandur"]},
+    "West": {"areas": ["Kengeri", "Nagarbhavi", "Raja-Rajeshwari Nagar", "Bangalore University", "Janapriya Township", "Jnanabharathi", "Malathalli", "Chandra Layout", "Attiguppe", "RPC Layout", "Annapoorneshwari Nagar", "Kottigepalya", "Kamakshipalya", "Sundkadakatte", "Kadabgere"]},
+    "North": {"areas": ["Laggere", "Hesarghatta Main Road", "8th Mile Signal", "T. Dasarahalli", "Abiigere", "Kammagonadahalli", "Mathikere", "Yeshwathpur"]},
+    "South": {"areas": ["JP Nagar 9th Phase", "Electronic City", "Hulimavu", "Konanakunte", "Uttarahalli", "Chikkakalasandra", "Ittamadu", "Girinagar", "Meenakshi Nagar"]},
+    "Central": {"areas": ["Hebbagodi Police Station", "Central Jail", "Hosar Road", "Surjapur Road", "Choodsandra Circle", "Kaikindrahalli", "Hosapalya"]},
+    "Non_Hiring": {"areas": ["Binny Pete", "Cotton Pete", "Chickpet"]}
+};
+
+// Redirect to create trip page with zone pre-selected
+function redirectToCreateTrip(zoneName) {
+    window.location.href = `/trips/create?zone=${encodeURIComponent(zoneName)}`;
 }
 
 // Initialize zones manager when page loads

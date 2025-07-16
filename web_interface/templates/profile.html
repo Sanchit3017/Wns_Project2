@@ -7,16 +7,40 @@
     <h1 class="text-3xl font-bold text-wns-blue mb-8 flex items-center">
         <i class="fas fa-user-circle mr-3"></i> My Profile
     </h1>
-    <div class="bg-white rounded-lg shadow p-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <div class="mb-4"><span class="font-medium text-gray-700">User ID:</span> <span id="profile-user-id" class="text-gray-900">Loading...</span></div>
-                <div class="mb-4"><span class="font-medium text-gray-700">Role:</span> <span id="profile-role" class="text-gray-900">-</span></div>
-                <div class="mb-4"><span class="font-medium text-gray-700">Name:</span> <span id="profile-name" class="text-gray-900">-</span></div>
-                <div class="mb-4"><span class="font-medium text-gray-700">Email:</span> <span id="profile-email" class="text-gray-900">-</span></div>
-                <div class="mb-4"><span class="font-medium text-gray-700">Access Level:</span> <span id="profile-access-level" class="text-gray-900">-</span></div>
+    <div class="bg-white rounded-2xl shadow-2xl p-8 border border-blue-100 flex flex-col md:flex-row items-center gap-8 animate-fade-in">
+        <!-- Avatar/Icon -->
+        <div class="flex-shrink-0 flex flex-col items-center justify-center">
+            <div class="w-28 h-28 rounded-full bg-gradient-to-br from-wns-blue to-wns-light-blue flex items-center justify-center shadow-lg mb-2">
+                <i class="fas fa-user text-white text-5xl"></i>
+            </div>
+            <div class="text-lg font-semibold text-wns-blue mt-2" id="profile-name-avatar">-</div>
+        </div>
+        <!-- Profile Details -->
+        <div class="flex-1 w-full">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <div class="mb-4"><span class="font-medium text-gray-700">User ID:</span> <span id="profile-user-id" class="text-gray-900">Loading...</span></div>
+                    <div class="mb-4"><span class="font-medium text-gray-700">Role:</span> <span id="profile-role" class="text-gray-900">-</span></div>
+                    <div class="mb-4"><span class="font-medium text-gray-700">Name:</span> <span id="profile-name" class="text-gray-900">-</span></div>
+                    <div class="mb-4"><span class="font-medium text-gray-700">Email:</span> <span id="profile-email" class="text-gray-900">-</span></div>
+                    <div class="mb-4"><span class="font-medium text-gray-700">Access Level:</span> <span id="profile-access-level" class="text-gray-900">-</span></div>
+                </div>
             </div>
         </div>
+    </div>
+    <!-- Driver Document Upload (only for drivers) -->
+    <div id="driver-upload-section" class="mt-8 hidden">
+        <h2 class="text-xl font-semibold text-gray-900 mb-2 flex items-center"><i class="fas fa-upload mr-2"></i>Upload Document</h2>
+        <form id="driver-upload-form" class="flex flex-col md:flex-row gap-4 items-center">
+            <input type="file" id="driver-upload-file" class="border border-gray-300 rounded-lg px-3 py-2" accept=".pdf,.jpg,.jpeg,.png" required />
+            <button type="submit" class="bg-wns-blue hover:bg-wns-light-blue text-white px-4 py-2 rounded-lg transition duration-200"><i class="fas fa-cloud-upload-alt mr-2"></i>Upload</button>
+        </form>
+        <div id="driver-upload-status" class="mt-2 text-sm"></div>
+    </div>
+    <!-- Uploaded Document Display (for drivers) -->
+    <div id="driver-documents-section" class="mt-4 hidden">
+        <h3 class="text-lg font-semibold text-gray-900 mb-2 flex items-center"><i class="fas fa-file-alt mr-2"></i>Uploaded Document</h3>
+        <div id="driver-documents-content"></div>
     </div>
 </div>
 {% endblock %}
@@ -45,6 +69,12 @@ async function loadUserProfile() {
                 const data = await res.json();
                 if (data.driver) profileData = data.driver;
             }
+            // Show upload section for drivers only
+            document.getElementById('driver-upload-section').classList.remove('hidden');
+            // Show uploaded document if available
+            if (profileData.identity_proof_url) {
+                showDriverDocument(profileData.identity_proof_url);
+            }
         } else if (user.role === 'admin') {
             const res = await fetch('/api/admins/' + encodeURIComponent(user.admin_id || user.id));
             if (res.ok) {
@@ -56,7 +86,86 @@ async function loadUserProfile() {
     } catch (e) { /* ignore */ }
     document.getElementById('profile-name').textContent = profileData.name || user.name || '-';
     document.getElementById('profile-access-level').textContent = accessLevel;
+    // Update avatar name as well
+    document.getElementById('profile-name-avatar').textContent = (profileData.name || user.name || '-').split(' ')[0];
 }
 document.addEventListener('DOMContentLoaded', loadUserProfile);
+
+// Driver document upload logic
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadForm = document.getElementById('driver-upload-form');
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('driver-upload-file');
+            const statusDiv = document.getElementById('driver-upload-status');
+            if (!fileInput.files.length) {
+                statusDiv.textContent = 'Please select a file.';
+                statusDiv.className = 'text-red-600 mt-2';
+                return;
+            }
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            statusDiv.textContent = 'Uploading...';
+            statusDiv.className = 'text-gray-600 mt-2';
+            try {
+                const user = JSON.parse(localStorage.getItem('user_info') || '{}');
+                const res = await fetch('/users/drivers/upload-identity', {
+                    method: 'POST',
+                    headers: {
+                        'x-user-id': user.id,
+                        'x-user-role': user.role
+                    },
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    statusDiv.textContent = 'Upload successful!';
+                    statusDiv.className = 'text-green-600 mt-2';
+                    // Show the uploaded document
+                    if (data.file_path) {
+                        showDriverDocument(data.file_path);
+                    }
+                } else {
+                    statusDiv.textContent = data.detail || 'Upload failed.';
+                    statusDiv.className = 'text-red-600 mt-2';
+                }
+            } catch (err) {
+                statusDiv.textContent = 'Upload failed.';
+                statusDiv.className = 'text-red-600 mt-2';
+            }
+        });
+    }
+});
+
+// Show uploaded document for driver
+function showDriverDocument(url) {
+    const docSection = document.getElementById('driver-documents-section');
+    const docContent = document.getElementById('driver-documents-content');
+    if (!url) {
+        docSection.classList.add('hidden');
+        return;
+    }
+    docSection.classList.remove('hidden');
+    // Determine file type by extension
+    const ext = url.split('.').pop().toLowerCase();
+    if (["jpg", "jpeg", "png"].includes(ext)) {
+        docContent.innerHTML = `<img src="/${url}" alt="Uploaded Document" class="max-w-xs rounded shadow border" />`;
+    } else if (ext === "pdf") {
+        docContent.innerHTML = `<a href="/${url}" target="_blank" class="text-blue-700 underline flex items-center"><i class="fas fa-file-pdf mr-2"></i>View PDF Document</a>`;
+    } else {
+        docContent.innerHTML = `<a href="/${url}" target="_blank" class="text-blue-700 underline flex items-center"><i class="fas fa-file-alt mr-2"></i>Download Document</a>`;
+    }
+}
 </script>
+<style>
+.animate-fade-in {
+    animation: fadeIn 0.7s ease-in;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
 {% endblock %} 

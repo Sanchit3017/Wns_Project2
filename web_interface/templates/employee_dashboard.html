@@ -3,77 +3,88 @@
 {% block title %}Employee Dashboard - WNS Transport{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto py-8">
-    <h1 class="text-3xl font-bold text-wns-blue mb-6 flex items-center">
-        <i class="fas fa-user-tie mr-3"></i> Employee Dashboard
-    </h1>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div class="max-w-5xl mx-auto py-10">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+        <div>
+            <h1 class="text-4xl font-extrabold text-wns-blue flex items-center gap-3 drop-shadow-sm">
+                <i class="fas fa-user-tie text-4xl"></i>
+                Welcome, <span class="text-wns-light-blue" id="employee-dashboard-name">Employee</span>
+            </h1>
+            <p class="text-gray-500 mt-2 text-lg">Your personalized transport dashboard</p>
+        </div>
+        <a href="/trips/create" class="inline-flex items-center px-6 py-3 rounded-lg bg-wns-blue hover:bg-wns-light-blue text-white font-semibold shadow transition">
+            <i class="fas fa-plus mr-2"></i> Schedule New Trip
+        </a>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <!-- My Bookings -->
-        <div class="col-span-2 bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-semibold mb-4 flex items-center">
-                <i class="fas fa-calendar-check mr-2 text-wns-blue"></i> My Bookings
-            </h2>
-            <div id="my-bookings-list" class="grid gap-4">
-                <!-- Dummy Booking Cards -->
-                <div class="rounded-xl shadow-lg p-5 bg-gradient-to-r from-wns-blue to-wns-light-blue text-white flex flex-col md:flex-row justify-between items-center">
-                    <div>
-                        <div class="font-bold text-lg mb-1">Trip to Whitefield</div>
-                        <div class="text-sm">Pickup: Bellandur</div>
-                        <div class="text-xs">Date: 2024-07-15 | 8:30 AM</div>
+        <div class="col-span-2">
+            <div class="bg-white rounded-2xl shadow-xl p-8 border border-blue-100">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2 text-wns-blue">
+                    <i class="fas fa-calendar-check"></i> My Bookings
+                </h2>
+                <div id="my-bookings-list" class="grid gap-6">
+                    <!-- Example Booking Cards (replace with dynamic content) -->
+                    <div class="rounded-xl shadow-lg p-6 bg-gradient-to-r from-wns-blue to-wns-light-blue text-white flex flex-col md:flex-row justify-between items-center">
+                        <div>
+                            <div class="font-bold text-lg mb-1">Trip to Whitefield</div>
+                            <div class="text-sm">Pickup: Bellandur</div>
+                            <div class="text-xs">Date: 2024-07-15 | 8:30 AM</div>
+                        </div>
+                        <div class="flex items-center mt-3 md:mt-0">
+                            <span class="inline-block px-3 py-1 rounded-full bg-white text-wns-blue font-semibold text-xs mr-2">Active</span>
+                            <i class="fas fa-bus-alt text-2xl"></i>
+                        </div>
                     </div>
-                    <div class="flex items-center mt-3 md:mt-0">
-                        <span class="inline-block px-3 py-1 rounded-full bg-white text-wns-blue font-semibold text-xs mr-2">Active</span>
-                        <i class="fas fa-bus-alt text-2xl"></i>
+                    <div class="rounded-xl shadow-lg p-6 bg-gradient-to-r from-green-400 to-green-600 text-white flex flex-col md:flex-row justify-between items-center">
+                        <div>
+                            <div class="font-bold text-lg mb-1">Trip to Electronic City</div>
+                            <div class="text-sm">Pickup: Koramangala</div>
+                            <div class="text-xs">Date: 2024-07-13 | 7:00 AM</div>
+                        </div>
+                        <div class="flex items-center mt-3 md:mt-0">
+                            <span class="inline-block px-3 py-1 rounded-full bg-white text-green-600 font-semibold text-xs mr-2">Completed</span>
+                            <i class="fas fa-check-circle text-2xl"></i>
+                        </div>
                     </div>
-                </div>
-                <div class="rounded-xl shadow-lg p-5 bg-gradient-to-r from-green-400 to-green-600 text-white flex flex-col md:flex-row justify-between items-center">
-                    <div>
-                        <div class="font-bold text-lg mb-1">Trip to Electronic City</div>
-                        <div class="text-sm">Pickup: Koramangala</div>
-                        <div class="text-xs">Date: 2024-07-13 | 7:00 AM</div>
+                    <div class="rounded-xl shadow-lg p-6 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white flex flex-col md:flex-row justify-between items-center">
+                        <div>
+                            <div class="font-bold text-lg mb-1">Trip to WNS Vuram</div>
+                            <div class="text-sm">Pickup: Indiranagar</div>
+                            <div class="text-xs">Date: 2024-07-10 | 9:00 AM</div>
+                        </div>
+                        <div class="flex items-center mt-3 md:mt-0">
+                            <span class="inline-block px-3 py-1 rounded-full bg-white text-yellow-700 font-semibold text-xs mr-2">Scheduled</span>
+                            <i class="fas fa-clock text-2xl"></i>
+                        </div>
                     </div>
-                    <div class="flex items-center mt-3 md:mt-0">
-                        <span class="inline-block px-3 py-1 rounded-full bg-white text-green-600 font-semibold text-xs mr-2">Completed</span>
-                        <i class="fas fa-check-circle text-2xl"></i>
-                    </div>
-                </div>
-                <div class="rounded-xl shadow-lg p-5 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white flex flex-col md:flex-row justify-between items-center">
-                    <div>
-                        <div class="font-bold text-lg mb-1">Trip to WNS Vuram</div>
-                        <div class="text-sm">Pickup: Indiranagar</div>
-                        <div class="text-xs">Date: 2024-07-10 | 9:00 AM</div>
-                    </div>
-                    <div class="flex items-center mt-3 md:mt-0">
-                        <span class="inline-block px-3 py-1 rounded-full bg-white text-yellow-700 font-semibold text-xs mr-2">Scheduled</span>
-                        <i class="fas fa-clock text-2xl"></i>
-                    </div>
-                </div>
-                <div class="rounded-xl shadow-lg p-5 bg-gradient-to-r from-red-400 to-red-600 text-white flex flex-col md:flex-row justify-between items-center">
-                    <div>
-                        <div class="font-bold text-lg mb-1">Trip to Marathahalli</div>
-                        <div class="text-sm">Pickup: JP Nagar</div>
-                        <div class="text-xs">Date: 2024-07-08 | 6:45 AM</div>
-                    </div>
-                    <div class="flex items-center mt-3 md:mt-0">
-                        <span class="inline-block px-3 py-1 rounded-full bg-white text-red-600 font-semibold text-xs mr-2">Cancelled</span>
-                        <i class="fas fa-times-circle text-2xl"></i>
+                    <div class="rounded-xl shadow-lg p-6 bg-gradient-to-r from-red-400 to-red-600 text-white flex flex-col md:flex-row justify-between items-center">
+                        <div>
+                            <div class="font-bold text-lg mb-1">Trip to Marathahalli</div>
+                            <div class="text-sm">Pickup: JP Nagar</div>
+                            <div class="text-xs">Date: 2024-07-08 | 6:45 AM</div>
+                        </div>
+                        <div class="flex items-center mt-3 md:mt-0">
+                            <span class="inline-block px-3 py-1 rounded-full bg-white text-red-600 font-semibold text-xs mr-2">Cancelled</span>
+                            <i class="fas fa-times-circle text-2xl"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         <!-- Quick Actions -->
-        <div class="bg-white rounded-lg shadow p-6 flex flex-col justify-between">
-            <h2 class="text-xl font-semibold mb-4 flex items-center">
-                <i class="fas fa-bolt mr-2 text-wns-secondary"></i> Quick Actions
+        <div class="bg-white rounded-2xl shadow-xl p-8 border border-blue-100 flex flex-col justify-between">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2 text-wns-blue">
+                <i class="fas fa-bolt"></i> Quick Actions
             </h2>
             <div class="flex flex-col gap-4">
-                <a href="/trips/create" class="btn btn-wns flex items-center justify-center py-2 px-4 rounded text-white bg-wns-blue hover:bg-wns-light-blue transition">
+                <a href="/trips/create" class="flex items-center justify-center py-3 px-4 rounded-lg text-white bg-wns-blue hover:bg-wns-light-blue font-semibold shadow transition">
                     <i class="fas fa-plus mr-2"></i> Schedule My Trip
                 </a>
-                <a href="/zones" class="btn btn-outline-primary flex items-center justify-center py-2 px-4 rounded border border-wns-blue text-wns-blue hover:bg-wns-blue hover:text-white transition">
+                <a href="/zones" class="flex items-center justify-center py-3 px-4 rounded-lg border border-wns-blue text-wns-blue hover:bg-wns-blue hover:text-white font-semibold shadow transition">
                     <i class="fas fa-map-marker-alt mr-2"></i> Find Nearest Stop
                 </a>
-                <a href="/profile/settings" class="btn btn-outline-secondary flex items-center justify-center py-2 px-4 rounded border border-wns-secondary text-wns-secondary hover:bg-wns-secondary hover:text-white transition">
+                <a href="/profile" class="flex items-center justify-center py-3 px-4 rounded-lg border border-wns-secondary text-wns-secondary hover:bg-wns-secondary hover:text-white font-semibold shadow transition">
                     <i class="fas fa-cog mr-2"></i> Profile Settings
                 </a>
             </div>
@@ -83,6 +94,20 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+// Optionally, update the welcome name dynamically
+const user = JSON.parse(localStorage.getItem('user_info') || '{}');
+document.getElementById('employee-dashboard-name').textContent = user.name ? user.name.split(' ')[0] : 'Employee';
+</script>
+<style>
+.animate-fade-in {
+    animation: fadeIn 0.7s ease-in;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
 <script>
 // Fetch and display employee profile details
 async function loadEmployeeProfile() {

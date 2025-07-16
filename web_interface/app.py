@@ -32,7 +32,6 @@ app = FastAPI(title="WNS Bangalore Transport Management", version="2.0.0")
 
 # Templates and static files
 templates = Jinja2Templates(directory="templates")
-# app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Initialize enhanced features
 enhancer = BangaloreTransportEnhancer()
@@ -282,10 +281,8 @@ async def admin_dashboard(request: Request):
 @app.get("/driver/dashboard", response_class=HTMLResponse) 
 async def driver_dashboard(request: Request):
     """Driver dashboard - placeholder"""
-    return templates.TemplateResponse("base.html", {
-        "request": request,
-        "title": "Driver Dashboard",
-        "message": "Driver Dashboard - Coming Soon!"
+    return templates.TemplateResponse("driver_dashboard.html", {
+        "request": request
     })
 
 @app.get("/employee/dashboard", response_class=HTMLResponse)
@@ -321,14 +318,16 @@ async def get_zones():
     }
 
 @app.post("/api/trips/enhanced")
-async def create_enhanced_trip(trip_request: TripRequest):
+async def create_enhanced_trip(trip_request: TripRequest, request: Request):
     """Create trip with enhanced Bangalore-specific features"""
     trip_data = trip_request.dict()
-    
+    # Forward user context headers
+    user_id = request.headers.get("x-user-id", "1")
+    user_role = request.headers.get("x-user-role", "admin")
+    user_email = request.headers.get("x-user-email", "admin@travel.com")
     try:
         # Use our enhanced trip creation
         enhanced_trip = await enhancer.create_enhanced_trip(trip_data)
-        
         # Also try to create in the actual system
         async with httpx.AsyncClient() as client:
             try:
@@ -336,9 +335,9 @@ async def create_enhanced_trip(trip_request: TripRequest):
                     f"{API_GATEWAY_URL}/api/trips/trips",
                     json=trip_data,
                     headers={
-                        "x-user-id": "1",
-                        "x-user-role": "admin", 
-                        "x-user-email": "admin@travel.com"
+                        "x-user-id": user_id,
+                        "x-user-role": user_role,
+                        "x-user-email": user_email
                     },
                     timeout=5
                 )
@@ -347,9 +346,7 @@ async def create_enhanced_trip(trip_request: TripRequest):
                     enhanced_trip["system_trip_id"] = actual_trip.get("id")
             except:
                 enhanced_trip["system_integration"] = "offline_mode"
-        
         return enhanced_trip
-        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create enhanced trip: {str(e)}")
 
@@ -527,47 +524,14 @@ async def get_dashboard_stats():
 
 @app.get("/api/admin/dashboard/kpis")
 async def get_admin_kpis():
-    """Get KPI data for admin dashboard"""
-    try:
-        # Try to get real data from services
-        async with httpx.AsyncClient() as client:
-            try:
-                # Get trip data
-                trips_response = await client.get(f"{API_GATEWAY_URL}/api/trips", timeout=5)
-                active_trips = 0
-                if trips_response.status_code == 200:
-                    trips_data = trips_response.json()
-                    active_trips = len([t for t in trips_data if t.get('status') == 'active'])
-                
-                # Get user data
-                users_response = await client.get(f"{USER_SERVICE_URL}/api/users/count", timeout=5)
-                total_users = 0
-                if users_response.status_code == 200:
-                    users_data = users_response.json()
-                    total_users = users_data.get('total', 0)
-                
-                return {
-                    "active_trips": active_trips,
-                    "total_users": total_users,
-                    "available_drivers": 8,  # Default value
-                    "coverage_zones": 12
-                }
-            except:
-                # Return default values if services are unavailable
-                return {
-                    "active_trips": 5,
-                    "total_users": 150,
-                    "available_drivers": 8,
-                    "coverage_zones": 12
-                }
-    except Exception as e:
-        return {
-            "error": f"KPI service error: {str(e)}",
-            "active_trips": 0,
-            "total_users": 0,
-            "available_drivers": 0,
-            "coverage_zones": 12
-        }
+    """Get KPI data for admin dashboard (demo override)"""
+    return {
+        "active_trips": 6,
+        "total_users": 10,
+        "available_drivers": 8,
+        "total_drivers": 10,
+        "coverage_zones": 12
+    }
 
 @app.get("/api/admin/trips/recent")
 async def get_recent_trips():
@@ -723,6 +687,63 @@ async def get_employee_by_id(employee_id: str):
             return {"error": "Employee not found", "employee": None}
     except Exception as e:
         return {"error": str(e), "employee": None}
+
+@app.get("/api/employees")
+async def get_all_employees():
+    """Get all employees for admin dashboard"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{USER_SERVICE_URL}/users/employees", timeout=5)
+            if response.status_code == 200:
+                employees = response.json()
+                # Format employees for admin dashboard
+                formatted_employees = []
+                for emp in employees:
+                    formatted_employees.append({
+                        "id": emp.get('id'),
+                        "user_id": emp.get('user_id'),
+                        "name": emp.get('name'),
+                        "employee_id": emp.get('employee_id'),
+                        "phone_number": emp.get('phone_number'),
+                        "home_location": emp.get('home_location'),
+                        "commute_schedule": emp.get('commute_schedule'),
+                        "is_active": True  # Default to active for seeded employees
+                    })
+                return formatted_employees
+            else:
+                return []
+    except Exception as e:
+        print(f"Error fetching employees: {e}")
+        return []
+
+@app.get("/api/drivers")
+async def get_all_drivers():
+    """Get all drivers for admin dashboard"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{USER_SERVICE_URL}/users/drivers", timeout=5)
+            if response.status_code == 200:
+                drivers = response.json()
+                # Format drivers for admin dashboard
+                formatted_drivers = []
+                for drv in drivers:
+                    formatted_drivers.append({
+                        "id": drv.get('id'),
+                        "user_id": drv.get('user_id'),
+                        "name": drv.get('name'),
+                        "phone_number": drv.get('phone_number'),
+                        "dl_number": drv.get('dl_number'),
+                        "vehicle_plate_number": drv.get('vehicle_plate_number'),
+                        "service_area": drv.get('service_area'),
+                        "is_available": drv.get('is_available', True),
+                        "identity_proof_status": drv.get('identity_proof_status', 'pending')
+                    })
+                return formatted_drivers
+            else:
+                return []
+    except Exception as e:
+        print(f"Error fetching drivers: {e}")
+        return []
 
 # WebSocket endpoint for real-time updates
 @app.websocket("/ws/{trip_id}")

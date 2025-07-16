@@ -8,6 +8,7 @@ from api.trip import (
 from shared.schemas.trip import TripCreate, TripUpdate, TripResponse, TripWithDetails, TripStatistics
 from database import get_database_session
 from typing import List, Optional
+from models.trip import Trip
 
 router = APIRouter()
 
@@ -190,3 +191,16 @@ def get_trip_analytics_data(
             detail="Only admins can view analytics"
         )
     return get_trip_analytics(db)
+
+@router.get("/trips", response_model=List[TripResponse])
+def get_all_trips(
+    db: Session = Depends(get_db),
+    user_context: dict = Depends(get_user_context)
+):
+    """Get all trips (Admin only)"""
+    if user_context["role"] != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can view all trips"
+        )
+    return db.query(Trip).order_by(Trip.created_at.desc()).all()

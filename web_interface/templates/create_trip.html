@@ -821,11 +821,20 @@ class TripCreator {
             notes: document.getElementById('notes').value || ''
         };
 
+        // Get logged-in user info for headers
+        const user = JSON.parse(localStorage.getItem('user_info') || '{}');
+        const userId = user.id || employeeId;
+        const userRole = user.role || 'employee';
+        const userEmail = user.email || '';
+
         try {
             const response = await fetch('/api/trips/enhanced', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'x-user-id': userId,
+                    'x-user-role': userRole,
+                    'x-user-email': userEmail
                 },
                 body: JSON.stringify(tripData)
             });
@@ -834,6 +843,10 @@ class TripCreator {
                 const result = await response.json();
                 document.getElementById('trip-id').textContent = result.trip_id || 'TRP-12345';
                 this.goToStep(3);
+                // If admin, refresh admin dashboard recent trips
+                if (userRole === 'admin' && window.refreshAdminRecentTrips) {
+                    window.refreshAdminRecentTrips();
+                }
             } else {
                 const errorData = await response.json();
                 console.error('Server error:', errorData);
@@ -874,7 +887,18 @@ class TripCreator {
 
 // Initialize trip creator when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    new TripCreator();
+    const tripCreator = new TripCreator();
+    // Pre-select zone if provided in query params
+    const params = new URLSearchParams(window.location.search);
+    const zone = params.get('zone');
+    if (zone) {
+        const zoneSelect = document.getElementById('pickup-zone');
+        if (zoneSelect) {
+            zoneSelect.value = zone;
+            // Trigger area update logic
+            tripCreator.updatePickupAreas(zone);
+        }
+    }
 });
 </script>
 {% endblock %}
